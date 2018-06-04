@@ -1,0 +1,24 @@
+Codes for the command-lines exercise of assignment 1:
+
+1. 
+cat hue_upload.csv hue_upload2.csv > hue_combined.csv
+
+2.
+gawk -F; "{for(i=2; i<NF; i++) printf $i \";\"; print $NF}" hue_combined.csv > hue_combined_cleaned.csv | tr -d "
+
+3.
+uniq -u hue_combined_cleaned.csv > hue.csv
+
+4.
+grep -F "lamp_change" hue.csv | wc -l
+
+5.
+grep -F "adherence_importance" hue.csv | uniq -u | wc -l
+
+6.
+gawk -F; "{print $1}" hue.csv | sort2 | uniq -c
+
+7.
+
+
+
