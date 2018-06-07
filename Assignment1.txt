@@ -19,7 +19,7 @@ gawk -F; "{print $2}" hue.csv | grep -F "adherence_importance" | sort2 | uniq | 
 gawk -F; "{print $1}" hue.csv | sort2 | uniq -c   //type 'mkdir \tmp' before using sort2
 
 7.
-grep -Po [a-zA-Z_]+ hue.csv | grep -P [a-zA-Z]+ | grep -P [^_].+[^_]+
+grep -Po [a-zA-Z]+[_]*[a-zA-Z]+ hue.csv | sort2 | uniq
 
 8.
 gawk -F; "{print $2}" hue.csv | grep -F "lamp_change" | gawk -F_ "{print $3$4$5}" | sort2 | uniq -c
