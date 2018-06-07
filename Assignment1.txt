@@ -4,22 +4,22 @@ Codes for the command-lines exercise of assignment 1:
 cat hue_upload.csv hue_upload2.csv > hue_combined.csv
 
 2.
-gawk -F; "{for(i=2; i<NF; i++) printf $i \";\"; print $NF}" hue_combined.csv > hue_combined_cleaned.csv | tr -d "
+gawk -F; "{for(i=2; i<NF; i++) printf $i \";\"; print $NF}" hue_combined.csv | tr -d ^\^" > hue_combined_cleaned.csv
 
 3.
-uniq -u hue_combined_cleaned.csv > hue.csv
+sort2 hue_combined_cleaned.csv | uniq > hue.csv
 
 4.
 grep -F "lamp_change" hue.csv | wc -l
 
 5.
-grep -F "adherence_importance" hue.csv | uniq -u | wc -l
+gawk -F; "{print $2}" hue.csv | grep -F "adherence_importance" | sort2 | uniq | wc -l
 
 6.
 gawk -F; "{print $1}" hue.csv | sort2 | uniq -c   //type 'mkdir \tmp' before using sort2
 
 7.
-gawk -F; "{print $2}" hue.csv | sort2 | uniq
+grep -Po [a-zA-Z_]+ hue.csv | grep -P [a-zA-Z]+ | grep -P [^_].+[^_]+
 
 8.
 gawk -F; "{print $2}" hue.csv | grep -F "lamp_change" | gawk -F_ "{print $3$4$5}" | sort2 | uniq -c
