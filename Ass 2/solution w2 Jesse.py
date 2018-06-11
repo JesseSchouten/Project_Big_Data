@@ -11,12 +11,12 @@ Name Student 2 email@vu.nl
 import pandas as pd
 import re as re
 import numpy as np
-import datetime as dt
+from datetime import datetime, date, time
 import os
 os.chdir("C:/Users/Jesse/OneDrive/Bureaublad laptop Jesse/Pre-master/Project big data/data-week-1")
 
 
-def read_csv_data(filenames):   
+    #def read_csv_data(filenames):   
    
 #%%  
     def getInformativeEvents(data):
@@ -42,12 +42,32 @@ def read_csv_data(filenames):
         
 #%%    
     def addDateTime(data):       
+        import datetime
+        
         l = []
+        
+        monthDict = {'jan' : 1,'feb' : 2,'maart' : 3,'apr' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'sep' : 9, 'okt' : 10,'nov' : 11,'dec' : 12}
+        
         for i in range(0,len(data)):
             string = data['event id'][i]
-            matches = re.search(r'\d{1,2}_\D{1,12}_\d{4}',string)
+            matches = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+(_(\d{1,2})_(\d{1,2})_(\d{1,2}))*',string)
+                    
+            year = int(matches.group(0).split('_')[2])
+            month = monthDict[matches.group(0).split('_')[1]]
+            day = int(matches.group(0).split('_')[0])
             
-            l.append(matches.group(0) if matches else l.append('No date'))
+            isDatetime = re.search(r'(_(\d{1,2})_(\d{1,2})_(\d{1,2}))',string)
+            if isDatetime:
+                hour = int(matches.group(0).split('_')[3])
+                minute =int(matches.group(0).split('_')[4])
+                sec = int(matches.group(0).split('_')[5])
+            else:
+                hour = 0
+                minute = 0
+                sec = 0
+            
+            dt = datetime.datetime(year,month,day,hour,minute,sec)
+            l.append(dt if matches else l.append('No datetime'))
         
         df = pd.DataFrame(l)
         df.columns = ['Datetime']
@@ -57,7 +77,7 @@ def read_csv_data(filenames):
     #%%
     
     def createID(data):
-        data.set_index(['Datetime'],['event'])       
+        data = data.set_index(['Datetime'],data['user_id'])
         return data
 
 #%%
@@ -74,7 +94,7 @@ def read_csv_data(filenames):
     
     data2 = addDateTime(data2)
 
-    data3= createID(data2)    
+    data3= createID(data2)     
     
     
     
@@ -95,5 +115,4 @@ if __name__ == '__main__':
     df = read_csv_data(["hue_upload.csv","hue_upload2.csv"])
     # to_mongodb(df)
     # read_mongodb({},'_id')
-
 
