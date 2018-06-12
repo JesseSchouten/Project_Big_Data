@@ -8,24 +8,21 @@ Name Student 1 email@vu.nl
 Name Student 2 email@vu.nl
 """
 
-   
-#%%  
-
-    def readCSVFile(data):
-        
+         
         
 #%%
-    def isNoInformativeEvent(line):
-        informativeEvent = ['lamp_change','nudge_time','bedtime_tonight','risetime','rise_reason','adherence_importance', 'fitness']     
-        if informativeEvent:
+    def isNoInformativeEvent(eventid):
+        matches = re.search(r'(lamp_change|nudge_time|bedtime_tonight|risetime|rise_reason|adherence_importance|fitness)',eventid)     
+        if matches:
             result = False
-        else: result = True
+        else:
+            result = True
         
         return result
 #%%   
-    def getEvent(line):
+    def getEvent(eventid):
         
-        matches = re.search(r'(lamp_change|nudge_time|bedtime_tonight|risetime|rise_reason|adherence_importance|fitness)',line)
+        matches = re.search(r'(lamp_change|nudge_time|bedtime_tonight|risetime|rise_reason|adherence_importance|fitness)',eventid)
             
         if matches:
             result = matches.group(0) 
@@ -34,19 +31,19 @@ Name Student 2 email@vu.nl
         return result         
         
 #%%    
-    def getDateTime(line):       
+    def getDateTime(eventid):       
         import datetime
         
         monthDict = {'jan' : 1,'feb' : 2,'maart' : 3,'apr' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'sep' : 9, 'okt' : 10,'nov' : 11,'dec' : 12}
         
-        matches = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+(_(\d{1,2})_(\d{1,2})_(\d{1,2}))*',line)
+        matches = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+(_(\d{1,2})_(\d{1,2})_(\d{1,2}))*',eventid)
          
         if matches:           
             year = int(matches.group(0).split('_')[2])
             month = monthDict[matches.group(0).split('_')[1]]
             day = int(matches.group(0).split('_')[0])
                 
-            isDatetime = re.search(r'(_(\d{1,2})_(\d{1,2})_(\d{1,2}))',line)
+            #isDatetime = re.search(r'(_(\d{1,2})_(\d{1,2})_(\d{1,2}))',line)
             #if isDatetime:
              #   hour = int(matches.group(0).split('_')[3])
               #  minute =int(matches.group(0).split('_')[4])
@@ -54,9 +51,10 @@ Name Student 2 email@vu.nl
             hour = 0
             minute = 0
             sec = 0
-        else: result = 'No datetime'
             
-        result = datetime.datetime(year,month,day,hour,minute,sec)
+            result = datetime.datetime(year,month,day,hour,minute,sec)
+        else: 
+            result = 'No datetime'           
         
         return result
     
@@ -78,7 +76,28 @@ Name Student 2 email@vu.nl
                                       'in_experimental_group' : False},\
                                       name=idx))
         return df
-
+    #%%
+    def convertValueToDateTime(time,dateLine):
+        import datetime
+        
+        matchestime = re.search(r'((\d{1,2})(\d{1,2}))+',time)
+        matchesdate = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+',dateLine)
+        
+        monthDict = {'jan' : 1,'feb' : 2,'maart' : 3,'apr' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'sep' : 9, 'okt' : 10,'nov' : 11,'dec' : 12}
+        
+        result = 'no datetime found'
+        
+        if matchesdate and matchestime:           
+            year = int(matchesdate.group(0).split('_')[2])
+            month = monthDict[matchesdate.group(0).split('_')[1]]
+            day = int(matchesdate.group(0).split('_')[0])
+            hour = int(matchestime.group(2))
+            minute = int(matchestime.group(3))
+                
+            result = datetime.datetime(year,month,day,hour,minute)
+        
+        return result
+        
 #%%
     import pandas as pd
     import re as re
@@ -111,23 +130,40 @@ Name Student 2 email@vu.nl
         with open('hue_upload.csv') as f:
             lines = [line.rstrip('\n') for line in f]
             for line in lines: 
-                if isNoInformativeEvent(line):
+                line_values = line.split(';')
+                user_id = line_values[1]
+                event_id =line_values[2]
+                value = line_values[3]
+                
+                if isNoInformativeEvent(event_id):
                     continue
-                else: 
-                    line_values = line.split(';')
-                    event = getEvent(line)
-                    datetime = getDateTime(line)
-                    user_id = line_values[1]
-                    index = (datetime,user_id)
-                    if(event)
-                        dataresult = insert_if_new(dataresult,index)
-
-                
-                
-                
-                
             
-    
+                event = getEvent(event_id)
+                datetime = getDateTime(event_id)
+                index = (datetime,user_id)
+                
+                if index not in dataresult:
+                    dataresult = insert_if_new(dataresult,index)
+                    
+                if event == 'bedtime_tonight':
+                    intendedBedtime = convertValueToDateTime(value,event_id)
+                    dataresult = dataresult.set_value(index,'intended_bedtime',intendedBedtime)
+                    
+                if(event == 'rise_reason'):
+                    dataresult = dataresult.set_value(index, 'rise_reason', value) 
+                    
+                if(event == 'lamp_change'):
+                    dataresult = dataresult.set_value(index, 'bedtime', value) 
+                
+                if(event == 'nudge_time'):
+                    dataresult = dataresult.set_value(index, 'is_experimental_group', True)
+                
+                if(event == 'fitness'):
+                    dataresult = dataresult.set_value(index, 'fitness', value) 
+                                
+                if(event == 'adherence_importance'):
+                    dataresult = dataresult.set_value(index, 'adherence_importance', value) 
+                    
     
     
 #%%    
