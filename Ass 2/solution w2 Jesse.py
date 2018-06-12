@@ -15,12 +15,13 @@ Name Student 2 email@vu.nl
         
         
 #%%
-    def getInformativeEvents(data):
-        searchfor = ['lamp_change','nudge_time','bedtime_tonight','risetime','rise_reason','adherence_importance', 'fitness']     
-        data = data[data['event id'].str.contains('|'.join(searchfor))]
-        data = data.reset_index()
+    def isNoInformativeEvent(line):
+        informativeEvent = ['lamp_change','nudge_time','bedtime_tonight','risetime','rise_reason','adherence_importance', 'fitness']     
+        if informativeEvent:
+            result = False
+        else: result = True
         
-        return data
+        return result
 #%%   
     def getEvent(line):
         
@@ -88,19 +89,19 @@ Name Student 2 email@vu.nl
     
     def read_csv_data(filenames):   
     
-        textfile='hue_upload.csv'
+        #textfile='hue_upload.csv'
         
-        colnames = ['row id','user id','event id','value']
+        #colnames = ['row id','user id','event id','value']
         
-        data = pd.read_csv(textfile,sep = ';'
-                           ,header=None
-                           ,names=colnames) 
+        #data = pd.read_csv(textfile,sep = ';'
+        #                   ,header=None
+        #                   ,names=colnames) 
         
-        data2=getInformativeEvents(data)
+        #data2=getInformativeEvents(data)
         
-        data2 = addEvent(data2)
+        #data2 = addEvent(data2)
         
-        data2 = addDateTime(data2)
+        #data2 = addDateTime(data2)
    
         #data3= createID(data2)   
         
@@ -110,16 +111,17 @@ Name Student 2 email@vu.nl
         with open('hue_upload.csv') as f:
             lines = [line.rstrip('\n') for line in f]
             for line in lines: 
-                line_values = line.split(';')
-                event = getEvent(line)
-                datetime = getDateTime(line)
-                user_id = int(line_values[1])
-                index = (datetime,user_id)
-                
-                dataresult = insert_if_new(dataresult,index)
-                
-                dataresult = dataresult.append(pd.Series({'bedtime':r1,'intended_bedtime':r2,'rise_time':r3,'rise_reason':r4,'fitness':r5,'adherence_importance':r6,'in_experimental_group':r7}, name=index))
-        
+                if isNoInformativeEvent(line):
+                    continue
+                else: 
+                    line_values = line.split(';')
+                    event = getEvent(line)
+                    datetime = getDateTime(line)
+                    user_id = line_values[1]
+                    index = (datetime,user_id)
+                    if(event)
+                        dataresult = insert_if_new(dataresult,index)
+
                 
                 
                 
