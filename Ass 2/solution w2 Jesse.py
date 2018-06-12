@@ -8,17 +8,13 @@ Name Student 1 email@vu.nl
 Name Student 2 email@vu.nl
 """
 
-import pandas as pd
-import re as re
-import numpy as np
-from datetime import datetime, date, time
-import os
-os.chdir("C:/Users/Jesse/OneDrive/Bureaublad laptop Jesse/Pre-master/Project big data/data-week-1")
-
-
-    #def read_csv_data(filenames):   
    
 #%%  
+
+    def readCSVFile(data):
+        
+        
+#%%
     def getInformativeEvents(data):
         searchfor = ['lamp_change','nudge_time','bedtime_tonight','risetime','rise_reason','adherence_importance', 'fitness']     
         data = data[data['event id'].str.contains('|'.join(searchfor))]
@@ -26,75 +22,109 @@ os.chdir("C:/Users/Jesse/OneDrive/Bureaublad laptop Jesse/Pre-master/Project big
         
         return data
 #%%   
-    def addEvent(data):
-        l = []
+    def getEvent(line):
         
-        for i in range(0,len(data)):
-            string = data['event id'][i]
-            matches = re.search(r'(lamp_change|nudge_time|bedtime_tonight|risetime|rise_reason|adherence_importance|fitness)',string)
+        matches = re.search(r'(lamp_change|nudge_time|bedtime_tonight|risetime|rise_reason|adherence_importance|fitness)',line)
             
-            l.append(matches.group(0) if matches else l.append('No event'))
-            
-        df = pd.DataFrame(l)
-        df.columns = ['event']
+        if matches:
+            result = matches.group(0) 
+        else: result = 'No event'
         
-        return pd.merge(df,data,left_index=True,right_index=True)         
+        return result         
         
 #%%    
-    def addDateTime(data):       
+    def getDateTime(line):       
         import datetime
-        
-        l = []
         
         monthDict = {'jan' : 1,'feb' : 2,'maart' : 3,'apr' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'sep' : 9, 'okt' : 10,'nov' : 11,'dec' : 12}
         
-        for i in range(0,len(data)):
-            string = data['event id'][i]
-            matches = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+(_(\d{1,2})_(\d{1,2})_(\d{1,2}))*',string)
-                    
+        matches = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+(_(\d{1,2})_(\d{1,2})_(\d{1,2}))*',line)
+         
+        if matches:           
             year = int(matches.group(0).split('_')[2])
             month = monthDict[matches.group(0).split('_')[1]]
             day = int(matches.group(0).split('_')[0])
+                
+            isDatetime = re.search(r'(_(\d{1,2})_(\d{1,2})_(\d{1,2}))',line)
+            #if isDatetime:
+             #   hour = int(matches.group(0).split('_')[3])
+              #  minute =int(matches.group(0).split('_')[4])
+              # sec = int(matches.group(0).split('_')[5])
+            hour = 0
+            minute = 0
+            sec = 0
+        else: result = 'No datetime'
             
-            isDatetime = re.search(r'(_(\d{1,2})_(\d{1,2})_(\d{1,2}))',string)
-            if isDatetime:
-                hour = int(matches.group(0).split('_')[3])
-                minute =int(matches.group(0).split('_')[4])
-                sec = int(matches.group(0).split('_')[5])
-            else:
-                hour = 0
-                minute = 0
-                sec = 0
-            
-            dt = datetime.datetime(year,month,day,hour,minute,sec)
-            l.append(dt if matches else l.append('No datetime'))
+        result = datetime.datetime(year,month,day,hour,minute,sec)
         
-        df = pd.DataFrame(l)
-        df.columns = ['Datetime']
-        
-        return pd.merge(df,data,left_index=True,right_index=True)
+        return result
     
     #%%
     
     def createID(data):
-        data = data.set_index(['Datetime'],data['user_id'])
+        data = data2.set_index(['Datetime','user id'])
         return data
+    
+    #%%
+    def insert_if_new(df,idx):
+        if idx not in df.index:
+            df = df.append(pd.Series({'bedtime' : float('nan'),\
+                                      'intended_bedtime' : float('nan'),\
+                                      'risetime' : float('nan'),\
+                                      'rise_reason' : float('nan'),\
+                                      'fitness' : float('nan'),\
+                                      'adherence_importance' : float('nan'),\
+                                      'in_experimental_group' : False},\
+                                      name=idx))
+        return df
 
 #%%
+    import pandas as pd
+    import re as re
+    import numpy as np
+    from datetime import datetime, date, time
+    import os
+    os.chdir("C:/Users/Jesse/OneDrive/Bureaublad laptop Jesse/Pre-master/Project big data/data-week-1")
     
-    textfile='hue_upload.csv'
-    colnames = ['row id','user id','event id','value']
-    data = pd.read_csv(textfile,sep = ';'
-                       ,header=None
-                       ,names=colnames) 
+    def read_csv_data(filenames):   
     
-    data2=getInformativeEvents(data)
-    
-    data2 = addEvent(data2)
-    
-    data2 = addDateTime(data2)
-
-    data3= createID(data2)     
+        textfile='hue_upload.csv'
+        
+        colnames = ['row id','user id','event id','value']
+        
+        data = pd.read_csv(textfile,sep = ';'
+                           ,header=None
+                           ,names=colnames) 
+        
+        data2=getInformativeEvents(data)
+        
+        data2 = addEvent(data2)
+        
+        data2 = addDateTime(data2)
+   
+        #data3= createID(data2)   
+        
+        columns = ['bedtime','intended_bedtime','risetime','rise_reason','fitness','adherence_importance','in_experimental_group']
+        dataresult = pd.DataFrame(columns=columns)
+        
+        with open('hue_upload.csv') as f:
+            lines = [line.rstrip('\n') for line in f]
+            for line in lines: 
+                line_values = line.split(';')
+                event = getEvent(line)
+                datetime = getDateTime(line)
+                user_id = int(line_values[1])
+                index = (datetime,user_id)
+                
+                dataresult = insert_if_new(dataresult,index)
+                
+                dataresult = dataresult.append(pd.Series({'bedtime':r1,'intended_bedtime':r2,'rise_time':r3,'rise_reason':r4,'fitness':r5,'adherence_importance':r6,'in_experimental_group':r7}, name=index))
+        
+                
+                
+                
+                
+            
     
     
     
