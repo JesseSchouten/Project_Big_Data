@@ -34,8 +34,8 @@ Name Student 2 email@vu.nl
     def getDateTimeFromEventID(eventid):       
         import datetime
         
-        monthDict = {'jan' : 1,'feb' : 2,'maart' : 3,'apr' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'sep' : 9, 'okt' : 10,'nov' : 11,'dec' : 12}
-        
+        monthDict = {'januari' : 1,'februari' : 2,'maart' : 3,'april' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'september' : 9, 'oktober' : 10,'november' : 11,'december' : 12}
+          
         matches = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+(_(\d{1,2})_(\d{1,2})_(\d{1,2}))*',eventid)
          
         if matches:           
@@ -83,7 +83,7 @@ Name Student 2 email@vu.nl
         matchestime = re.search(r'((\d{1,2})(\d{2}))+',time)
         matchesdate = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+',dateLine)
         
-        monthDict = {'jan' : 1,'feb' : 2,'maart' : 3,'apr' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'sep' : 9, 'okt' : 10,'nov' : 11,'dec' : 12}
+        monthDict = {'januari' : 1,'februari' : 2,'maart' : 3,'april' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'september' : 9, 'oktober' : 10,'november' : 11,'december' : 12}
         
         result = 'no datetime found'
         
@@ -115,7 +115,7 @@ Name Student 2 email@vu.nl
         
         matches = re.search(r'(\d{1,2})_(\D{1,12})_(\d{4})+_(\d{1,2})_(\d{1,2})_(\d{1,2})_(\d{3})+', event_id)
         
-        monthDict = {'jan' : 1,'feb' : 2,'maart' : 3,'apr' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'sep' : 9, 'okt' : 10,'nov' : 11,'dec' : 12}
+        monthDict = {'januari' : 1,'februari' : 2,'maart' : 3,'april' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'september' : 9, 'oktober' : 10,'november' : 11,'december' : 12}
         
         year = int(matches.group(3))
         month = int(monthDict[matches.group(2)])
@@ -130,88 +130,78 @@ Name Student 2 email@vu.nl
         return result
         
 #%%
-    import pandas as pd
-    import re as re
-    import numpy as np
-    import datetime
     import os
     os.chdir("C:/Users/Jesse/OneDrive/Bureaublad laptop Jesse/Pre-master/Project big data/data-week-1")
     
-    def read_csv_data(filenames):   
-    
-        #textfile='hue_upload.csv'
-        
-        #colnames = ['row id','user id','event id','value']
-        
-        #data = pd.read_csv(textfile,sep = ';'
-        #                   ,header=None
-        #                   ,names=colnames) 
-        
-        #data2=getInformativeEvents(data)
-        
-        #data2 = addEvent(data2)
-        
-        #data2 = addDateTime(data2)
-   
-        #data3= createID(data2)   
+    filenames = ["hue_upload.csv","hue_upload2.csv"]
+    def read_csv_data(filenames):
+        import pandas as pd
+        import re as re
+        import numpy as np
+        import datetime
         
         columns = ['bedtime','intended_bedtime','risetime','rise_reason','fitness','adherence_importance','in_experimental_group']
         dataresult = pd.DataFrame(columns=columns)
         
-        with open('hue_upload.csv') as f:
-            lines = [line.rstrip('\n') for line in f]
-            for line in lines: 
-                line_values = line.split(';')
-                user_id = line_values[1]
-                event_id =line_values[2]
-                value = line_values[3]
-                
-                if isNoInformativeEvent(event_id):
-                    continue
-            
-                event = getEvent(event_id)
-                dtime = getDateTimeFromEventID(event_id)
-                index = (dtime,user_id)
-                
-                if index not in dataresult:
-                    dataresult = insert_if_new(dataresult,index)
+        for file in filenames:    
+            with open(file) as f:
+                lines = [line.rstrip('\n') for line in f]
+                for line in lines: 
+                    line_values = line.split(';')
+                    user_id = int(re.search(r'\d+',line_values[1]).group())
+                    event_id =line_values[2]
+                    value = line_values[3]
+                    print(event_id)
                     
-                if event == 'bedtime_tonight':
-                    #Skip if the time in the string has 1,2 or larger then 5 number (taking the comma's into account!)
-                    if (len(value) > 4) and (len(value) < 7):
-                        intendedBedtime = convertValueToDateTime(value,event_id,event)
-                        dataresult = dataresult.set_value(index,'intended_bedtime',intendedBedtime)
-                  
-                if event == 'risetime':
-                    #Skip if the time in the string has 1,2 or larger then 5 number (taking the comma's into account!)
-                    if (len(value) > 4) and (len(value) < 7):
-                        risetime = convertValueToDateTime(value,event_id,event)
-                        dataresult = dataresult.set_value(index,'risetime',risetime)
-                        
-                if(event == 'rise_reason'):
-                    dataresult = dataresult.set_value(index, 'rise_reason', value) 
-                    
-                if(event == 'lamp_change' and value == '"OFF"'):
-                    time = getTimeFromLampChange(event_id)  
-                    if int(time.strftime('%H')) < 6:
-                        dtime = dtime - datetime.timedelta(hours = 24)                      
-                        index = (dtime,user_id)
+                    if isNoInformativeEvent(event_id):
+                        continue
+                
+                    event = getEvent(event_id)
+                    dtime = getDateTimeFromEventID(event_id)
+                    index = (dtime,user_id)
+                   
                     if index not in dataresult:
                         dataresult = insert_if_new(dataresult,index)
+                        
+                    if event == 'bedtime_tonight':
+                        #Skip if the time in the string has 1,2 or larger then 5 number (taking the comma's into account!)
+                        if (len(value) > 4) and (len(value) < 7):
+                            intendedBedtime = convertValueToDateTime(value,event_id,event)
+                            dataresult = dataresult.set_value(index,'intended_bedtime',intendedBedtime)
+                      
+                    if event == 'risetime':
+                        #Skip if the time in the string has 1,2 or larger then 5 number (taking the comma's into account!)
+                        if (len(value) > 4) and (len(value) < 7):
+                            risetime = convertValueToDateTime(value,event_id,event)
+                            dataresult = dataresult.set_value(index,'risetime',risetime)
+                            
+                    if event == 'rise_reason':
+                        dataresult = dataresult.set_value(index, 'rise_reason', value) 
+                        
+                    if(event == 'lamp_change' and value == '"OFF"'):
+                        time = getTimeFromLampChange(event_id)
+                        #Check whether the bedtime doesn't belong to the day before
+                        if int(time.strftime('%H')) < 6:
+                            dtime = dtime - datetime.timedelta(hours = 24)                      
+                            index = (dtime,user_id)
+                        #Checker whether the (possibly) changed index was already created for the user_id
+                        if index not in dataresult:
+                            dataresult = insert_if_new(dataresult,index)
+                        #Just replace 'bedtime' when the time is later then a current registered time!
+                        #dateAtIndex = dataresult.ix[index,'bedtime']
+                        #if(index>currentIndex or )
+                        dataresult = dataresult.set_value(index, 'bedtime', time) 
                     
-                    if()
-                dataresult = dataresult.set_value(index, 'bedtime', time) 
-                
-                if(event == 'nudge_time'):
-                    dataresult = dataresult.set_value(index, 'in_experimental_group', True)
-                
-                if(event == 'fitness'):
-                    dataresult = dataresult.set_value(index, 'fitness', value) 
-                                
-                if(event == 'adherence_importance'):
-                    dataresult = dataresult.set_value(index, 'adherence_importance', value) 
+                    if event == 'nudge_time':
+                        dataresult = dataresult.set_value(index, 'in_experimental_group', True)
                     
-    
+                    if(event == 'fitness'):
+                        dataresult = dataresult.set_value(index, 'fitness', value) 
+                                    
+                    if(event == 'adherence_importance'):
+                        dataresult = dataresult.set_value(index, 'adherence_importance', value) 
+                        
+                        
     
 #%%    
     
