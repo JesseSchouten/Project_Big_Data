@@ -10,15 +10,7 @@ Name Student 2 email@vu.nl
 
          
         
-#%%
-    def isNoInformativeEvent(eventid):
-        matches = re.search(r'(lamp_change|nudge_time|bedtime_tonight|risetime|rise_reason|adherence_importance|fitness)',eventid)     
-        if matches:
-            result = False
-        else:
-            result = True
-        
-        return result
+
 #%%   
     def getEvent(eventid):
         
@@ -140,6 +132,116 @@ Name Student 2 email@vu.nl
         import numpy as np
         import datetime
         
+        def isNoInformativeEvent(eventid):
+            matches = re.search(r'(lamp_change|nudge_time|bedtime_tonight|risetime|rise_reason|adherence_importance|fitness)',eventid)     
+            if matches:
+                result = False
+            else:
+                result = True
+        
+            return result
+    
+        def getEvent(eventid):
+            
+            matches = re.search(r'(lamp_change|nudge_time|bedtime_tonight|risetime|rise_reason|adherence_importance|fitness)',eventid)
+                
+            if matches:
+                result = matches.group(0) 
+            else: result = 'No event'
+            
+            return result         
+  
+        def getDateTimeFromEventID(eventid):       
+            import datetime
+            
+            monthDict = {'januari' : 1,'februari' : 2,'maart' : 3,'april' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'september' : 9, 'oktober' : 10,'november' : 11,'december' : 12}
+              
+            matches = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+(_(\d{1,2})_(\d{1,2})_(\d{1,2}))*',eventid)
+             
+            if matches:           
+                year = int(matches.group(0).split('_')[2])
+                month = monthDict[matches.group(0).split('_')[1]]
+                day = int(matches.group(0).split('_')[0])
+                    
+                #isDatetime = re.search(r'(_(\d{1,2})_(\d{1,2})_(\d{1,2}))',line)
+                #if isDatetime:
+                 #   hour = int(matches.group(0).split('_')[3])
+                  #  minute =int(matches.group(0).split('_')[4])
+                  # sec = int(matches.group(0).split('_')[5])
+                hour = 0
+                minute = 0
+                sec = 0
+                
+                result = datetime.datetime(year,month,day,hour,minute,sec)
+            else: 
+                result = 'No datetime'           
+            
+            return result
+    
+        def insert_if_new(df,idx):
+            if idx not in df.index:
+                df = df.append(pd.Series({'bedtime' : float('nan'),\
+                                          'intended_bedtime' : float('nan'),\
+                                          'risetime' : float('nan'),\
+                                          'rise_reason' : float('nan'),\
+                                          'fitness' : float('nan'),\
+                                          'adherence_importance' : float('nan'),\
+                                          'in_experimental_group' : False},\
+                                          name=idx))
+            return df
+        
+        def convertValueToDateTime(time,dateLine,event):
+            import datetime
+            
+            matchestime = re.search(r'((\d{1,2})(\d{2}))+',time)
+            matchesdate = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+',dateLine)
+            
+            monthDict = {'januari' : 1,'februari' : 2,'maart' : 3,'april' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'september' : 9, 'oktober' : 10,'november' : 11,'december' : 12}
+            
+            result = 'no datetime found'
+            
+            if matchesdate and matchestime:           
+                year = int(matchesdate.group(0).split('_')[2])
+                month = monthDict[matchesdate.group(0).split('_')[1]]
+                day = int(matchesdate.group(0).split('_')[0])
+                #Check if user starting sleeping in morning (wrong input)
+                hour = int(matchestime.group(2))
+                
+                if event == 'bedtime_tonight':                
+                    if hour >=6 and hour <= 12:
+                        hour += 12
+                    #Check if the time is set at 24:00, and change to 0:00
+                    if hour == 24:
+                        hour = 0
+                    else:
+                        hour = int(matchestime.group(2))         
+                    
+                minute = int(matchestime.group(3))
+                
+                result = datetime.datetime(year,month,day,hour,minute)
+            
+            return result
+    
+        def getTimeFromLampChange(event_id):
+            import datetime        
+            
+            matches = re.search(r'(\d{1,2})_(\D{1,12})_(\d{4})+_(\d{1,2})_(\d{1,2})_(\d{1,2})_(\d{3})+', event_id)
+            
+            monthDict = {'januari' : 1,'februari' : 2,'maart' : 3,'april' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'september' : 9, 'oktober' : 10,'november' : 11,'december' : 12}
+            
+            year = int(matches.group(3))
+            month = int(monthDict[matches.group(2)])
+            day = int(matches.group(1))
+            hour = int(matches.group(4))
+            minute = int(matches.group(5))
+            second = int(matches.group(6))
+            millisecond = int(matches.group(7))
+            
+            result = datetime.datetime(year, month, day, hour, minute, second, millisecond)
+            
+            return result
+        
+        
         columns = ['bedtime','intended_bedtime','risetime','rise_reason','fitness','adherence_importance','in_experimental_group']
         dataresult = pd.DataFrame(columns=columns)
         
@@ -187,10 +289,14 @@ Name Student 2 email@vu.nl
                         #Checker whether the (possibly) changed index was already created for the user_id
                         if index not in dataresult:
                             dataresult = insert_if_new(dataresult,index)
-                        #Just replace 'bedtime' when the time is later then a current registered time!
-                        #dateAtIndex = dataresult.ix[index,'bedtime']
-                        #if(index>currentIndex or )
-                        dataresult = dataresult.set_value(index, 'bedtime', time) 
+                        
+                        dateAtIndex = dataresult.ix[index,'bedtime']
+                        #Just replace 'bedtime' when the time is later then a current registered time! 
+                        #OR no time at all yet in cell!
+                        if type(dateAtIndex) == float:
+                            dataresult = dataresult.set_value(index, 'bedtime', time) 
+                        elif(time<dateAtIndex):
+                            dataresult = dataresult.set_value(index, 'bedtime', time) 
                     
                     if event == 'nudge_time':
                         dataresult = dataresult.set_value(index, 'in_experimental_group', True)
