@@ -31,7 +31,7 @@ Name Student 2 email@vu.nl
         return result         
         
 #%%    
-    def getDateTime(eventid):       
+    def getDateTimeFromEventID(eventid):       
         import datetime
         
         monthDict = {'jan' : 1,'feb' : 2,'maart' : 3,'apr' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'sep' : 9, 'okt' : 10,'nov' : 11,'dec' : 12}
@@ -77,10 +77,10 @@ Name Student 2 email@vu.nl
                                       name=idx))
         return df
     #%%
-    def convertValueToDateTime(time,dateLine):
+    def convertValueToDateTime(time,dateLine,event):
         import datetime
         
-        matchestime = re.search(r'((\d{1,2})(\d{1,2}))+',time)
+        matchestime = re.search(r'((\d{1,2})(\d{2}))+',time)
         matchesdate = re.search(r'((\d{1,2})_(\D{1,12})_(\d{4}))+',dateLine)
         
         monthDict = {'jan' : 1,'feb' : 2,'maart' : 3,'apr' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'sep' : 9, 'okt' : 10,'nov' : 11,'dec' : 12}
@@ -91,10 +91,41 @@ Name Student 2 email@vu.nl
             year = int(matchesdate.group(0).split('_')[2])
             month = monthDict[matchesdate.group(0).split('_')[1]]
             day = int(matchesdate.group(0).split('_')[0])
+            #Check if user starting sleeping in morning (wrong input)
             hour = int(matchestime.group(2))
-            minute = int(matchestime.group(3))
+            
+            if event == 'bedtime_tonight':                
+                if hour >=6 and hour <= 12:
+                    hour += 12
+                #Check if the time is set at 24:00, and change to 0:00
+                if hour == 24:
+                    hour = 0
+                else:
+                    hour = int(matchestime.group(2))         
                 
+            minute = int(matchestime.group(3))
+            
             result = datetime.datetime(year,month,day,hour,minute)
+        
+        return result
+    
+    #%%
+    def getTimeFromLampChange(event_id):
+        import datetime        
+        
+        matches = re.search(r'(\d{1,2})_(\D{1,12})_(\d{4})+_(\d{1,2})_(\d{1,2})_(\d{1,2})_(\d{3})+', event_id)
+        
+        monthDict = {'jan' : 1,'feb' : 2,'maart' : 3,'apr' : 4,'mei' : 5,'juni' : 6,'juli' : 7,'augustus' : 8,'sep' : 9, 'okt' : 10,'nov' : 11,'dec' : 12}
+        
+        year = int(matches.group(3))
+        month = int(monthDict[matches.group(2)])
+        day = int(matches.group(1))
+        hour = int(matches.group(4))
+        minute = int(matches.group(5))
+        second = int(matches.group(6))
+        millisecond = int(matches.group(7))
+        
+        result = datetime.datetime(year, month, day, hour, minute, second, millisecond)
         
         return result
         
@@ -102,7 +133,7 @@ Name Student 2 email@vu.nl
     import pandas as pd
     import re as re
     import numpy as np
-    from datetime import datetime, date, time
+    import datetime
     import os
     os.chdir("C:/Users/Jesse/OneDrive/Bureaublad laptop Jesse/Pre-master/Project big data/data-week-1")
     
@@ -139,24 +170,40 @@ Name Student 2 email@vu.nl
                     continue
             
                 event = getEvent(event_id)
-                datetime = getDateTime(event_id)
-                index = (datetime,user_id)
+                dtime = getDateTimeFromEventID(event_id)
+                index = (dtime,user_id)
                 
                 if index not in dataresult:
                     dataresult = insert_if_new(dataresult,index)
                     
                 if event == 'bedtime_tonight':
-                    intendedBedtime = convertValueToDateTime(value,event_id)
-                    dataresult = dataresult.set_value(index,'intended_bedtime',intendedBedtime)
-                    
+                    #Skip if the time in the string has 1,2 or larger then 5 number (taking the comma's into account!)
+                    if (len(value) > 4) and (len(value) < 7):
+                        intendedBedtime = convertValueToDateTime(value,event_id,event)
+                        dataresult = dataresult.set_value(index,'intended_bedtime',intendedBedtime)
+                  
+                if event == 'risetime':
+                    #Skip if the time in the string has 1,2 or larger then 5 number (taking the comma's into account!)
+                    if (len(value) > 4) and (len(value) < 7):
+                        risetime = convertValueToDateTime(value,event_id,event)
+                        dataresult = dataresult.set_value(index,'risetime',risetime)
+                        
                 if(event == 'rise_reason'):
                     dataresult = dataresult.set_value(index, 'rise_reason', value) 
                     
-                if(event == 'lamp_change'):
-                    dataresult = dataresult.set_value(index, 'bedtime', value) 
+                if(event == 'lamp_change' and value == '"OFF"'):
+                    time = getTimeFromLampChange(event_id)  
+                    if int(time.strftime('%H')) < 6:
+                        dtime = dtime - datetime.timedelta(hours = 24)                      
+                        index = (dtime,user_id)
+                    if index not in dataresult:
+                        dataresult = insert_if_new(dataresult,index)
+                    
+                    if()
+                dataresult = dataresult.set_value(index, 'bedtime', time) 
                 
                 if(event == 'nudge_time'):
-                    dataresult = dataresult.set_value(index, 'is_experimental_group', True)
+                    dataresult = dataresult.set_value(index, 'in_experimental_group', True)
                 
                 if(event == 'fitness'):
                     dataresult = dataresult.set_value(index, 'fitness', value) 
