@@ -253,7 +253,6 @@ Name Student 2 email@vu.nl
                     user_id = int(re.search(r'\d+',line_values[1]).group())
                     event_id =line_values[2]
                     value = line_values[3]
-                    print(event_id)
                     
                     if isNoInformativeEvent(event_id):
                         continue
@@ -307,16 +306,87 @@ Name Student 2 email@vu.nl
                     if(event == 'adherence_importance'):
                         dataresult = dataresult.set_value(index, 'adherence_importance', value) 
                         
-                        
+        return dataresult
     
 #%%    
     
+import pymongo, datetime
+ 
+    client = pymongo.MongoClient("localhost", 27017)
+    db = client['BigData'] 
+    sleepdata = db['sleepdata'] 
+    
+    sleepdatatest = db['sleepdatatest']
+    
+    #Convert tuple index to dict (doesn't work as expected, namely less indexes)
+    #converted_index = dict((x, y) for x, y in dataresult.index.values)
+    
+    for i in range(0,len(dataresult)):
+        
+    
+    #Convert tuple to string:
+    dataresult.index=dataresult.index.map(str)
+    
+    
+    #Storing (i think this works, only the part of the index doesn't work)
+    for i in range(0,len(dataresult)):
+        sleepdatatest.insert_one({'date':str(dataresult.index[i][0]),\
+                                  'user':str(dataresult.index[i][1]),\
+                          'bedtime': dataresult['bedtime'][i],\
+                          'intended_bedtime' : dataresult['intended_bedtime'][i],\
+                          'risetime' : dataresult['risetime'][i],\
+                          'rise_reason' : dataresult['rise_reason'][i],\
+                          'fitness' : dataresult['fitness'][i],\
+                          'adherence_importance' : dataresult['adherence_importance'][i],\
+                          'in_experimental_group' : dataresult['in_experimental_group'][i]})
+    sleepdatatest.create_index([('date',pymongo.DESCENDING)
+                                ,('user',pymongo.ASCENDING)]
+                                ,unique=True)
+        #sleepdatatest.create_index([converted_index[i][0], converted_index[i][1]])
+   
+    #Clearing a database, but doesn't work always i think
+    sleepdata = sleepdata.dropDatabase
+    
+    for doc in sleepdatatest.find():
+        print(doc)
+        
+    sleepdatatest.get_id()
+       
+    sleepDuration = dataresult['risetime'][2] - dataresult['bedtime'][2]
+    
 def to_mongodb(df):
-    None
-
-
+    import pymongo, datetime
+    from pymongo import MongoClient
+ 
+    client = pymongo.MongoClient("localhost", 27017)
+    db = client['BigData'] 
+    sleepdata = db['sleepdata']
+    sleepdata.delete_many({})
+    
+    for i in range(0,len(df)):
+        if type(df['risetime'][i]) != float and type(df['bedtime'][i]) != float:
+            #sleepDuration = df['risetime'][i] - df['bedtime'][i]
+            sleepDuration =0
+        else: sleepDuration = 0
+        
+        sleepdata.insert_one({'date':str(df.index[i][0]),\
+                                  'user':str(df.index[i][1]),\
+                              'bedtime': df['bedtime'][i],\
+                              'intended_bedtime' : df['intended_bedtime'][i],\
+                              'risetime' : df['risetime'][i],\
+                              'rise_reason' : df['rise_reason'][i],\
+                              'fitness' : df['fitness'][i],\
+                              'adherence_importance' : df['adherence_importance'][i],\
+                              'in_experimental_group' : df['in_experimental_group'][i],\
+                              'sleep_duration' : sleepDuration})
+        
+    sleepdata.create_index([('date',pymongo.DESCENDING)
+                                ,('user',pymongo.ASCENDING)]
+                                ,unique=True)
+    
 def read_mongodb(filter,sort):
-    None
+    for doc in sleepdata.find():
+        print(doc)
 
 
 if __name__ == '__main__':
@@ -326,4 +396,3 @@ if __name__ == '__main__':
     df = read_csv_data(["hue_upload.csv","hue_upload2.csv"])
     # to_mongodb(df)
     # read_mongodb({},'_id')
-
