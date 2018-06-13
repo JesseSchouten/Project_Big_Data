@@ -315,23 +315,31 @@ import pymongo, datetime
  
     client = pymongo.MongoClient("localhost", 27017)
     db = client['BigData'] 
-    sleepdata = db['sleepdata']  
+    sleepdata = db['sleepdata'] 
     
+    sleepdatatest = db['sleepdatatest']
+    
+    #Convert tuple index to dict (doesn't work as expected, namely less indexes)
+    converted_index = dict((x, y) for x, y in dataresult.index.values)
+    
+    #Storing (i think this works, only the part of the index doesn't work)
     for i in range(0,len(dataresult)):
-        sleepdata.insert_one({'bedtime': dataresult['bedtime'][0],\
-                          'intended_bedtime' : dataresult['intended_bedtime'][0],\
-                          'risetime' : dataresult['risetime'][0],\
-                          'rise_reason' : dataresult['rise_reason'][0],\
-                          'fitness' : dataresult['fitness'][0],\
-                          'adherence_importance' : dataresult['adherence_importance'][0],\
-                          'in_experimental_group' : dataresult['in_experimental_group'][0]})
-    
-    use[sleepdata];
+        sleepdatatest.insert_one({'bedtime': dataresult['bedtime'][i],\
+                          'intended_bedtime' : dataresult['intended_bedtime'][i],\
+                          'risetime' : dataresult['risetime'][i],\
+                          'rise_reason' : dataresult['rise_reason'][i],\
+                          'fitness' : dataresult['fitness'][i],\
+                          'adherence_importance' : dataresult['adherence_importance'][i],\
+                          'in_experimental_group' : dataresult['in_experimental_group'][i]})
+        sleepdatatest.create_index([converted_index[i][0], converted_index[i][1]])
+   
+    #Clearing a database, but doesn't work always i think
     sleepdata = sleepdata.dropDatabase
     
-    sleepdata.create_index([])
     for doc in sleepdata.find():
         print(doc)
+        
+        
 def to_mongodb(df):
     None
 
