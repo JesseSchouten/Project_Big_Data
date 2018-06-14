@@ -363,23 +363,28 @@ def to_mongodb(df):
     sleepdata = db['sleepdata']
     sleepdata.delete_many({})
     
-    for i in range(0,len(df)):
-        if type(df['risetime'][i]) != float and type(df['bedtime'][i]) != float:
+    for i in range(0,len(dataresult)):
+        if type(dataresult['risetime'][i]) != float and type(dataresult['bedtime'][i]) != float:
             #sleepDuration = df['risetime'][i] - df['bedtime'][i]
-            sleepDuration =0
-        else: sleepDuration = 0
+            sleepDuration = 
+        else: 
+            sleepDuration = 0
         
-        sleepdata.insert_one({'date':str(df.index[i][0]),\
-                                  'user':str(df.index[i][1]),\
-                              'bedtime': df['bedtime'][i],\
-                              'intended_bedtime' : df['intended_bedtime'][i],\
-                              'risetime' : df['risetime'][i],\
-                              'rise_reason' : df['rise_reason'][i],\
-                              'fitness' : df['fitness'][i],\
-                              'adherence_importance' : df['adherence_importance'][i],\
-                              'in_experimental_group' : df['in_experimental_group'][i],\
+        x['_id'] = {'date': dataresult.index[i][0], 'user': dataresult.index[i][1]}
+        
+        sleepdata.insert_one({'id':x,\
+                                'date':str(dataresult.index[i][0]),\
+                                  'user':str(dataresult.index[i][1]),\
+                              'bedtime': dataresult['bedtime'][i],\
+                              'intended_bedtime' : dataresult['intended_bedtime'][i],\
+                              'risetime' : dataresult['risetime'][i],\
+                              'rise_reason' : dataresult['rise_reason'][i],\
+                              'fitness' : dataresult['fitness'][i],\
+                              'adherence_importance' : dataresult['adherence_importance'][i],\
+                              'in_experimental_group' : dataresult['in_experimental_group'][i],\
                               'sleep_duration' : sleepDuration})
         
+    
     sleepdata.create_index([('date',pymongo.DESCENDING)
                                 ,('user',pymongo.ASCENDING)]
                                 ,unique=True)
