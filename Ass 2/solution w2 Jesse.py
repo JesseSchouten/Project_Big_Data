@@ -210,6 +210,9 @@ Name Student 2 email@vu.nl
                 if event == 'bedtime_tonight':                
                     if hour >=6 and hour <= 12:
                         hour += 12
+                    elif hour > 12 and hour < 13:
+                        hour -= 12
+                        day += 1
                     #Check if the time is set at 24:00, and change to 0:00
                     if hour == 24:
                         hour = 0
@@ -261,24 +264,6 @@ Name Student 2 email@vu.nl
                     dtime = getDateTimeFromEventID(event_id)
                     index = (dtime,user_id)
                    
-                    if index not in dataresult:
-                        dataresult = insert_if_new(dataresult,index)
-                        
-                    if event == 'bedtime_tonight':
-                        #Skip if the time in the string has 1,2 or larger then 5 number (taking the comma's into account!)
-                        if (len(value) > 4) and (len(value) < 7):
-                            intendedBedtime = convertValueToDateTime(value,event_id,event)
-                            dataresult = dataresult.set_value(index,'intended_bedtime',intendedBedtime)
-                      
-                    if event == 'risetime':
-                        #Skip if the time in the string has 1,2 or larger then 5 number (taking the comma's into account!)
-                        if (len(value) > 4) and (len(value) < 7):
-                            risetime = convertValueToDateTime(value,event_id,event)
-                            dataresult = dataresult.set_value(index,'risetime',risetime)
-                            
-                    if event == 'rise_reason':
-                        dataresult = dataresult.set_value(index, 'rise_reason', value) 
-                        
                     if(event == 'lamp_change' and value == '"OFF"'):
                         time = getTimeFromLampChange(event_id)
                         #Check whether the bedtime doesn't belong to the day before
@@ -296,6 +281,24 @@ Name Student 2 email@vu.nl
                             dataresult = dataresult.set_value(index, 'bedtime', time) 
                         elif(time<dateAtIndex):
                             dataresult = dataresult.set_value(index, 'bedtime', time) 
+                    
+                    if index not in dataresult:
+                        dataresult = insert_if_new(dataresult,index)
+                        
+                    if event == 'bedtime_tonight':
+                        #Skip if the time in the string has 1,2 or larger then 5 number (taking the comma's into account!)
+                        if (len(value) > 4) and (len(value) < 7):
+                            intendedBedtime = convertValueToDateTime(value,event_id,event)
+                            dataresult = dataresult.set_value(index,'intended_bedtime',intendedBedtime)
+                      
+                    if event == 'risetime':
+                        #Skip if the time in the string has 1,2 or larger then 5 number (taking the comma's into account!)
+                        if (len(value) > 4) and (len(value) < 7):
+                            risetime = convertValueToDateTime(value,event_id,event)
+                            dataresult = dataresult.set_value(index,'risetime',risetime)
+                            
+                    if event == 'rise_reason':
+                        dataresult = dataresult.set_value(index, 'rise_reason', value) 
                     
                     if event == 'nudge_time':
                         dataresult = dataresult.set_value(index, 'in_experimental_group', True)
@@ -321,8 +324,7 @@ import pymongo, datetime
     #Convert tuple index to dict (doesn't work as expected, namely less indexes)
     #converted_index = dict((x, y) for x, y in dataresult.index.values)
     
-    for i in range(0,len(dataresult)):
-        
+    for i in range(0,len(dataresult)):       
     
     #Convert tuple to string:
     dataresult.index=dataresult.index.map(str)
@@ -354,23 +356,41 @@ import pymongo, datetime
        
     sleepDuration = dataresult['risetime'][2] - dataresult['bedtime'][2]
     
+    
+    for doc in p.find():
+        print(doc)
+
+    from pprint import pprint
+
+    cursor = p.find({})
+    for document in cursor: 
+        pprint(document)
+        
+    for record in p.find().limit(10):
+        pprint.pprint(record)
+    
 def to_mongodb(df):
     import pymongo, datetime
     from pymongo import MongoClient
- 
+     
     client = pymongo.MongoClient("localhost", 27017)
     db = client['BigData'] 
     sleepdata = db['sleepdata']
     sleepdata.delete_many({})
     
+    x = {}
+    
     for i in range(0,len(df)):
         if type(df['risetime'][i]) != float and type(df['bedtime'][i]) != float:
             #sleepDuration = df['risetime'][i] - df['bedtime'][i]
-            sleepDuration =0
+            sleepDuration = 0
         else: sleepDuration = 0
         
-        sleepdata.insert_one({'date':str(df.index[i][0]),\
-                                  'user':str(df.index[i][1]),\
+        x['_id'] ={'date':df.index[i][0],'user':df.index[i][1]}
+        
+        sleepdata.insert_one({'_id':x,\
+                              'date':str(df.index[i][0]),\
+                               'user':str(df.index[i][1]),\
                               'bedtime': df['bedtime'][i],\
                               'intended_bedtime' : df['intended_bedtime'][i],\
                               'risetime' : df['risetime'][i],\
@@ -379,15 +399,64 @@ def to_mongodb(df):
                               'adherence_importance' : df['adherence_importance'][i],\
                               'in_experimental_group' : df['in_experimental_group'][i],\
                               'sleep_duration' : sleepDuration})
+                    
+    return sleepdata
         
-    sleepdata.create_index([('date',pymongo.DESCENDING)
-                                ,('user',pymongo.ASCENDING)]
-                                ,unique=True)
-    
+    #sleepdata.create_index([('date',pymongo.DESCENDING)
+    #                           ,('user',pymongo.ASCENDING)]
+    #                          ,unique=True)
+
 def read_mongodb(filter,sort):
     for doc in sleepdata.find():
         print(doc)
 
+    import pymongo
+    from pymongo import MongoClient
+    import pprint
+
+    for doc in mongodb.find():
+        print(doc)
+
+    query = mongodb.find({})
+    
+    query.find_one()
+    
+    from prettytable import PrettyTable
+    t = [['date'
+              ,'user'
+              ,'bedtime'
+              ,'intended_bedtime'
+              ,'risetime'
+              ,'rise_reason'
+              ,'fitness'
+              ,'adherence_importance'
+              ,'in_experimental_group'
+              ,'sleep_duration']]
+                    
+    sort = '_id'
+    for document in query.sort(sort,pymongo.ASCENDING):
+        print(document['date'] 
+              ,document['user']
+              ,document['bedtime']
+              ,document['intended_bedtime']
+              ,document['risetime']
+              ,document['rise_reason']
+              ,document['fitness']
+              ,document['adherence_importance']
+              ,document['in_experimental_group']
+              ,document['sleep_duration'])
+
+
+    table = {'date'
+              ,'user'
+              ,'bedtime'
+              ,'intended_bedtime'
+              ,'risetime'
+              ,'rise_reason'
+              ,'fitness'
+              ,'adherence_importance'
+              ,'in_experimental_group'
+              ,'sleep_duration'}
 
 if __name__ == '__main__':
     # this code block is run if you run solution.py (instead of run_solution.py)
