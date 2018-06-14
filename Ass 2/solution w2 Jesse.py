@@ -95,13 +95,13 @@ def read_csv_data(filenames):
             hour = int(matchestime.group(2))
             
             if event == 'bedtime_tonight':                
+                #if someone expects to sleep between 6:00 and 13:00, he/she problably mean the evening
                 if hour >=6 and hour <= 12:
                     hour += 12
                 elif hour > 12 and hour < 13:
                     hour -= 12
-                    day += 1
                 #Check if the time is set at 24:00, and change to 0:00
-                if hour == 24:
+                elif hour == 24:
                     hour = 0
                 else:
                     hour = int(matchestime.group(2))         
