@@ -198,65 +198,8 @@ Name Student 2 email@vu.nl
                         
         return dataresult
     
-#%%    
-    
-import pymongo, datetime
- 
-    client = pymongo.MongoClient("localhost", 27017)
-    db = client['BigData'] 
-    sleepdata = db['sleepdata'] 
-    
-    sleepdatatest = db['sleepdatatest']
-    
-    #Convert tuple index to dict (doesn't work as expected, namely less indexes)
-    #converted_index = dict((x, y) for x, y in dataresult.index.values)
-    
-    for i in range(0,len(dataresult)):       
-    
-    #Convert tuple to string:
-    dataresult.index=dataresult.index.map(str)
-    
-    
-    #Storing (i think this works, only the part of the index doesn't work)
-    for i in range(0,len(dataresult)):
-        sleepdatatest.insert_one({'date':str(dataresult.index[i][0]),\
-                                  'user':str(dataresult.index[i][1]),\
-                          'bedtime': dataresult['bedtime'][i],\
-                          'intended_bedtime' : dataresult['intended_bedtime'][i],\
-                          'risetime' : dataresult['risetime'][i],\
-                          'rise_reason' : dataresult['rise_reason'][i],\
-                          'fitness' : dataresult['fitness'][i],\
-                          'adherence_importance' : dataresult['adherence_importance'][i],\
-                          'in_experimental_group' : dataresult['in_experimental_group'][i]})
-    sleepdatatest.create_index([('date',pymongo.DESCENDING)
-                                ,('user',pymongo.ASCENDING)]
-                                ,unique=True)
-        #sleepdatatest.create_index([converted_index[i][0], converted_index[i][1]])
-   
-    #Clearing a database, but doesn't work always i think
-    sleepdata = sleepdata.dropDatabase
-    
-    for doc in sleepdatatest.find():
-        print(doc)
-        
-    sleepdatatest.get_id()
-       
-    sleepDuration = dataresult['risetime'][2] - dataresult['bedtime'][2]
-    
-    
-    for doc in p.find():
-        print(doc)
-
-    from pprint import pprint
-
-    cursor = p.find({})
-    for document in cursor: 
-        pprint(document)
-        
-    for record in p.find().limit(10):
-        pprint.pprint(record)
-    
-
+#%%        
+#Returns a filled mongodb (if we wouldn't do this it would only exist in the function)
 def to_mongodb(df):
     import pymongo, datetime,pytz
     from pymongo import MongoClient
@@ -268,40 +211,41 @@ def to_mongodb(df):
     sleepdata = db['sleepdata']
     sleepdata.delete_many({})
     
-    for i in range(0,len(dataresult)):
+    for i in range(0,len(df)):
        # if type(dataresult['risetime'][i]) != float and type(dataresult['bedtime'][i]) != float:
        #     #sleepDuration = df['risetime'][i] - df['bedtime'][i]
        #     sleepDuration = 
        # else: 
        #     sleepDuration = 0
         
-        if isinstance(dataresult['bedtime'][i],datetime.datetime) and \
-            isinstance(dataresult['risetime'][i], datetime.datetime):
+        if isinstance(df['bedtime'][i],datetime.datetime) and \
+            isinstance(df['risetime'][i], datetime.datetime):
             #time slept = time in a day - time awake
-            sleepDuration = 86400 - round((dataresult['bedtime'][i] - dataresult['risetime'][i]).total_seconds(), 0) 
+            sleepDuration = 86400 - round((df['bedtime'][i] - df['risetime'][i]).total_seconds(), 0) 
             
         else:
             sleepDuration = float('nan')
                         
         x = {}
-        x['_id'] = {'date': dataresult.index[i][0], 'user': dataresult.index[i][1]}
+        x['_id'] = {'date': df.index[i][0], 'user': df.index[i][1]}
         
         sleepdata.insert_one({'_id':x,\
-                      'date':str(dataresult.index[i][0]),\
-                      'user':str(dataresult.index[i][1]),\
-                      'bedtime': dataresult['bedtime'][i],\
-                      'intended_bedtime' : dataresult['intended_bedtime'][i],\
-                      'risetime' : dataresult['risetime'][i],\
-                      'rise_reason' : dataresult['rise_reason'][i],\
-                      'fitness' : dataresult['fitness'][i],\
-                      'adherence_importance' : dataresult['adherence_importance'][i],\
-                      'in_experimental_group' : dataresult['in_experimental_group'][i],\
+                      'date':df.index[i][0],\
+                      'user':df.index[i][1],\
+                      'bedtime': df['bedtime'][i],\
+                      'intended_bedtime' : df['intended_bedtime'][i],\
+                      'risetime' : df['risetime'][i],\
+                      'rise_reason' : df['rise_reason'][i],\
+                      'fitness' : df['fitness'][i],\
+                      'adherence_importance' : df['adherence_importance'][i],\
+                      'in_experimental_group' : df['in_experimental_group'][i],\
                       'sleep_duration' : sleepDuration})
         
-        sleepdata.aggregate(query)
+        #sleepdata.aggregate(query) [met dit volgt een error!]
     
     return sleepdata
-         ''''           
+         
+''''           
             query = [{
                 '$project': {
                         '_id': 1,
@@ -326,82 +270,82 @@ def to_mongodb(df):
                                         }
                             }
             }]
- ''''   
+''''   
         
     #sleepdata.create_index([('date',pymongo.DESCENDING)
     #                           ,('user',pymongo.ASCENDING)]
     #                          ,unique=True)
 
-def isNan(var);:
-    return isinstance(var,float)
-
-def print_mongodb_table(query):
-    
-    
-    
+#assumes the database is named sleepdata
 def read_mongodb(filter,sort):
-    for doc in sleepdata.find():
-        print(doc)
-
     import pymongo
     from pymongo import MongoClient
     import pprint
     import re as re
     import time
-
-    for doc in mongodb.find():
+    
+    def isNan(var):
+        return isinstance(var,float)
+    
+    for doc in sleepdata.find():
         print(doc)
+    
+    query = sleepdata.find(filter)
 
-    query = mongodb.find({})
-    
-    query.find_one()
-    
-    print('date\t'
-              ,'user\t'
-              ,'bedtime\t'
-              ,'intended_bedtime\t'
-              ,'risetime\t'
-              ,'rise_reason\t'
-              ,'fitness\t'
-              ,'adherence_importance\t'
-              ,'in_experimental_group\t'
-              ,'sleep_duration')
-                    
-    matches = re.search(r'(_id|date|user|bedtime|intended_bedtime|risetime|rise_reason|fitness|adherence_importance|in_experimental_group|sleep_duration)',sort)
-       
+    matches = re.search(r'(_id|date|user|bedtime|intended_bedtime|risetime|rise_reason|fitness|adherence_importance|in_experimental_group|sleep_duration)',sort)         
+
     if matches:
         printedQuery = query.sort(sort,pymongo.ASCENDING)
     else: 
-        printedQuery = query
+        printedQuery = query      
         
-    date = str(document['date'])
-    user = str(document['user'])
+    print('date\t'
+          ,'user\t'
+          ,'bedtime\t'
+          ,'intended\t'
+          ,'risetime\t'
+          ,'reason\t'
+          ,'fitness\t'
+          ,'adh\t'
+          ,'in_exp\t'
+          ,'sleep_duration')
     
-    if isNan(document['bedtime']):       
-        bedtime = str(document['bedtime'])
-    else: 
-         bedtime = str(document['bedtime'].time())
-    
-    if isNan(document['intended_bedtime']):
-        int_bedtime = str(document['intended_bedtime'])
-    else:    
-        int_bedtime = str(document['intended_bedtime'].time()) 
+    for document in printedQuery:                          
+        date = str(document['date'].date())
+        user = str(document['user'])
         
-    if isNan(document['risetime']):
-        risetime = str(document['risetime'])
-    else: 
-        risetime = str(document['risetime'].time())
-    
-    
-    rise_reason = str(document['rise_reason'])
-    fitness = str(document['fitness'])
-    adh_importance = str(document['adherence_importance'])
-    in_exp_group = str(document['in_experimental_group'] )
-    sleep_duration = str(document['sleep_duration'])
-    
-    for document in printedQuery:
-        print("",date,user,bedtime,int_bedtime,risetime,rise_reason,fitness,adh_importance,in_exp_group,sleep_duration)
+        if isNan(document['bedtime']):       
+            bedtime = str(document['bedtime'])
+        else: 
+             bedtime = str(document['bedtime'].time())
+        
+        if isNan(document['intended_bedtime']):
+            int_bedtime = str(document['intended_bedtime'])
+        else:    
+            int_bedtime = str(document['intended_bedtime'].time()) 
+            
+        if isNan(document['risetime']):
+            risetime = str(document['risetime'])
+        else: 
+            risetime = str(document['risetime'].time())     
+        
+        rise_reason = str(document['rise_reason'])
+        fitness = str(document['fitness'])
+        adh_importance = str(document['adherence_importance'])
+        in_exp_group = str(document['in_experimental_group'] )
+        sleep_duration = str(document['sleep_duration'])
 
+        print("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t" %
+              (date
+              ,user
+              ,bedtime
+              ,int_bedtime
+              ,risetime
+              ,rise_reason
+              ,fitness
+              ,adh_importance
+              ,in_exp_group
+              ,sleep_duration))
 
 if __name__ == '__main__':
     # this code block is run if you run solution.py (instead of run_solution.py)
