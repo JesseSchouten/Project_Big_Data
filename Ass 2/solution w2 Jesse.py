@@ -10,7 +10,7 @@ Jesse Schouten j7.schouten@student.vu.nl
         
 #%%
 import os
-os.chdir("C:/Users/Jesse/OneDrive/Bureaublad laptop Jesse/Pre-master/Project big data/data-week-1")
+os.chdir("C:/Users/Elitebook/Desktop/ProjectBigData")
 
 filenames = ["hue_upload.csv","hue_upload2.csv"]
 def read_csv_data(filenames):
@@ -100,8 +100,9 @@ def read_csv_data(filenames):
                     hour += 12
                 elif hour > 12 and hour < 13:
                     hour -= 12
+                
                 #Check if the time is set at 24:00, and change to 0:00
-                elif hour == 24:
+                if hour == 24:
                     hour = 0
                 else:
                     hour = int(matchestime.group(2))         
@@ -221,7 +222,7 @@ def to_mongodb(df):
         if isinstance(df['bedtime'][i],datetime.datetime) and \
             isinstance(df['risetime'][i], datetime.datetime):
             #time slept = time in a day - time awake
-            sleepDuration = 86400 - round((df['bedtime'][i] - df['risetime'][i]).total_seconds(), 0) 
+            sleepDuration = round((df['bedtime'][i] - df['risetime'][i]).total_seconds(), 0) 
             
         else:
             sleepDuration = float('nan')
@@ -243,52 +244,22 @@ def to_mongodb(df):
         
         #sleepdata.aggregate(query) [met dit volgt een error!]
     
-    return sleepdata
-         
-"""           
-            query = [{
-                '$project': {
-                        '_id': 1,
-                        'sleep_duration': { 
-                                '$divide': [
-                                        {'$subtract': ['$risetime', '$bedtime']},
-                                        1000
-                                        ] 
-                                        } 
-                            }
-            }]
-                        
-        else:                
-            query = [{
-                '$project': {
-                        '_id': 1,
-                        'sleep_duration': {
-                                '$divide': [
-                                        0, 
-                                        1
-                                        ]
-                                        }
-                            }
-            }]
-"""  
-        
-    #sleepdata.create_index([('date',pymongo.DESCENDING)
-    #                           ,('user',pymongo.ASCENDING)]
-    #                          ,unique=True)
+    return sleepdata         
 
+#%%
 #assumes the database is named sleepdata
 def read_mongodb(filter,sort):
     import pymongo
     from pymongo import MongoClient
-    import pprint
+    from pprint import pprint
     import re as re
     import time
     
     def isNan(var):
         return isinstance(var,float)
     
-    for doc in sleepdata.find():
-        print(doc)
+    #for doc in sleepdata.find():
+    #    print(doc)
     
     query = sleepdata.find(filter)
 
@@ -334,6 +305,14 @@ def read_mongodb(filter,sort):
         adh_importance = str(document['adherence_importance'])
         in_exp_group = str(document['in_experimental_group'] )
         sleep_duration = str(document['sleep_duration'])
+        
+        #cursor = sleepdata.find({})
+        #for document in cursor:
+        #    pprint(document)
+       
+        #data = json.dumps(json_data)
+        #json_to_python = json.loads(sleepdata)
+        #print (json_to_python)
 
         print("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t" %
               (date
@@ -347,6 +326,7 @@ def read_mongodb(filter,sort):
               ,in_exp_group
               ,sleep_duration))
 
+#%%
 if __name__ == '__main__':
     # this code block is run if you run solution.py (instead of run_solution.py)
     # it is convenient for debugging
