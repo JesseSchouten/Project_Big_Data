@@ -4,8 +4,8 @@ We truthfully declare:
 - that we have neither helped other students nor received help from other students
 - that we provided references for all code that is not our own
 
-Name Student 1 email@vu.nl
-Name Student 2 email@vu.nl
+Yannick Hogebrug  y.r.hogebrug@student.vu.nl
+Jesse Schouten j7.schouten@student.vu.nl
 """
         
 #%%
