@@ -202,28 +202,35 @@ def read_csv_data(filenames):
 #%%        
 #Returns a filled mongodb (if we wouldn't do this it would only exist in the function)
 def to_mongodb(df):
-    import pymongo, datetime,pytz
-    from pymongo import MongoClient
+    import pymongo, datetime
     
-    tz= pytz.timezone('Europe/Amsterdam')
- 
+    def bedtime_previousDay(df, i):
+        previousDay = df.index[i][0] - datetime.timedelta(days = 1)
+        userID = df.index[i][1]
+        try:
+            bedtime = df.get_value((previousDay, userID), 'bedtime')
+            return bedtime
+        except KeyError:
+            return float('nan')
+    
     client = pymongo.MongoClient("localhost", 27017)
     db = client['BigData'] 
     sleepdata = db['sleepdata']
     sleepdata.delete_many({})
     
     for i in range(0,len(df)):
-       # if type(dataresult['risetime'][i]) != float and type(dataresult['bedtime'][i]) != float:
-       #     #sleepDuration = df['risetime'][i] - df['bedtime'][i]
-       #     sleepDuration = 
-       # else: 
-       #     sleepDuration = 0
+        if isinstance(df['bedtime'][i],datetime.datetime):
+            bedtime = bedtime_previousDay(df, i)
+            if isinstance(bedtime ,datetime.datetime) and \
+                isinstance(df['risetime'][i], datetime.datetime):    
+                    risetime = df['risetime'][i] 
+                    sleepDuration = round((risetime - bedtime).total_seconds(), 0)
+            else:
+                sleepDuration = float('nan')
         
-        if isinstance(df['bedtime'][i],datetime.datetime) and \
-            isinstance(df['risetime'][i], datetime.datetime):
-            #time slept = time in a day - time awake
-            sleepDuration = round((df['bedtime'][i] - df['risetime'][i]).total_seconds(), 0) 
-            
+        #Search for the bedtime of the day before
+            df.index[i][0] - datetime.timedelta(days = 1)
+        
         else:
             sleepDuration = float('nan')
                         
@@ -241,8 +248,6 @@ def to_mongodb(df):
                       'adherence_importance' : df['adherence_importance'][i],\
                       'in_experimental_group' : df['in_experimental_group'][i],\
                       'sleep_duration' : sleepDuration})
-        
-        #sleepdata.aggregate(query) [met dit volgt een error!]
     
     return sleepdata         
 
@@ -270,16 +275,17 @@ def read_mongodb(filter,sort):
     else: 
         printedQuery = query      
         
-    print('date\t'
-          ,'user\t'
-          ,'bedtime\t'
-          ,'intended\t'
-          ,'risetime\t'
-          ,'reason\t'
-          ,'fitness\t'
-          ,'adh\t'
-          ,'in_exp\t'
-          ,'sleep_duration')
+    print("%10s\t%2s\t%8s\t%8s\t%8s\t%5s\t%5s\t%5s\t%5s\t%7s\t" %
+          ('date'
+          ,'user'
+          ,'bedtime'
+          ,'intended'
+          ,'risetime'
+          ,'reason'
+          ,'fitness'
+          ,'adh'
+          ,'in_exp'
+          ,'sleep_duration'))
     
     for document in printedQuery:                          
         date = str(document['date'].date())
@@ -305,16 +311,8 @@ def read_mongodb(filter,sort):
         adh_importance = str(document['adherence_importance'])
         in_exp_group = str(document['in_experimental_group'] )
         sleep_duration = str(document['sleep_duration'])
-        
-        #cursor = sleepdata.find({})
-        #for document in cursor:
-        #    pprint(document)
-       
-        #data = json.dumps(json_data)
-        #json_to_python = json.loads(sleepdata)
-        #print (json_to_python)
 
-        print("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t" %
+        print("%10s\t%2s\t%8s\t%8s\t%8s\t%5s\t%5s\t%5s\t%5s\t%7s\t" %
               (date
               ,user
               ,bedtime
