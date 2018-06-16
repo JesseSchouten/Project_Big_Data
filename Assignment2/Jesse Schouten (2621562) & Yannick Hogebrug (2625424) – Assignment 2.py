@@ -330,5 +330,5 @@ if __name__ == '__main__':
     # it is convenient for debugging
 
     df = read_csv_data(["hue_upload.csv","hue_upload2.csv"])
-    # to_mongodb(df)
-    # read_mongodb({},'_id')
+    sleepdata = to_mongodb(df)
+    read_mongodb({},'_id')
