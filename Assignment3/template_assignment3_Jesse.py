@@ -6,8 +6,8 @@ We truthfully declare:
 - that we have neither helped other students nor received help from other students
 - that we provided references for all code that is not our own
 
-Name Student 1 email@vu.nl
-Name Student 2 email@vu.nl
+Yannick Hogebrug  y.r.hogebrug@student.vu.nl
+Jesse Schouten j7.schouten@student.vu.nl
 """
 
 # Include these lines without modifications
@@ -22,14 +22,26 @@ import requests
 import json
 import threading
 
+
+
 # Implement these mapper and reducer functions
 
 def mapper1(line):
-    print("line has %s commas" % line.count(','))
-    print(line)
+    fitness = line.split(',')[5]
+    
+    if fitness:
+        print(fitness)
 
 def reducer1(line):
-    print("got line %s" % line)
+    global count
+    
+    if line:
+        fitness = float(line)
+        if (fitness > 50.0):
+            count += 1
+        
+    if not line:
+        print(count)
     
 def mapper2(line):
     None
@@ -60,8 +72,13 @@ def process_queue(queue):
     None
 
 def main():
-    None
-	
+    None	
+
+import os
+os.chdir("C:/Users/Jesse/OneDrive/Bureaublad laptop Jesse/Pre-master/Project big data")
+
+global count
+count = 0
 
 if(len(sys.argv) == 4):
     data = sys.argv[1]
@@ -105,7 +122,7 @@ with open(data) as file:
     locals()[reducer]('')
 
 mystdout.close()
-    
+ 
 # End of MapReduce
 
 # Run main
