@@ -35,20 +35,41 @@ def mapper1(line):
 def reducer1(line):
     global count
     
-    if line:
+    if not line:
+        print(count)
+    else:    
         fitness = float(line)
         if (fitness > 50.0):
             count += 1
-        
-    if not line:
-        print(count)
-    
+          
 def mapper2(line):
-    None
+    fitness = line.split(',')[5]
+    user = line.split(',')[1]
+    
+    if fitness:
+        print(user, fitness)
 	
 def reducer2(line):
-    None
-
+    global sum_fitness, current_user, user, count
+    
+    if line:
+        user, fitness = line.split(' ')
+        fitness = float(fitness)
+        
+        if(current_user == user):
+            sum_fitness += fitness
+            count = count + 1
+        else: 
+            if current_user != None:
+                mean_fitness = round(sum_fitness/count, 2)
+                print('{}\t{}'.format(current_user, mean_fitness))
+            count = 1
+            sum_fitness = fitness
+            current_user = user
+    else:
+        mean_fitness = round(sum_fitness/count, 2)
+        print('{}\t{}'.format(current_user, mean_fitness))
+        
 def mapper3(line):
     None
 	
@@ -75,7 +96,14 @@ def main():
     None	
 
 global count
-count = 0
+global sum_fitness
+count, sum_fitness = 0, 0
+
+global current_user
+global user
+global current_count
+current_user, user = None, None
+current_count = 0
 
 if(len(sys.argv) == 4):
     data = sys.argv[1]
@@ -83,8 +111,8 @@ if(len(sys.argv) == 4):
     reducer = sys.argv[3]
 else:
     data = 'hue_week_3_2017.csv'
-    mapper = 'mapper1'
-    reducer = 'reducer1'
+    mapper = 'mapper2'
+    reducer = 'reducer2'
 
 # Include these lines without modifications
  
