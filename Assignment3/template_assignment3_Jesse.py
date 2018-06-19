@@ -48,29 +48,11 @@ def mapper2(line):
 def reducer2(line):
     None
 
-def mapper3(line):  
-    def convertToDatetime(datestring):
-        import datetime       
-        import re as re
-        
-        matches = re.search(r'((\d{4})-(\d{2})-(\d{2}) (\d{1,2}):(\d{1,2}):(\d{1,2}).(\d{3}))+', datestring)
-        
-        year = int(matches.group(2))
-        month = int(matches.group(3))
-        day = int(matches.group(4))
-        hour = int(matches.group(5))
-        minute = int(matches.group(6))
-        second = int(matches.group(7))
-        millisecond = int(matches.group(8))
-        
-        result = datetime.datetime(year, month, day, hour, minute, second, millisecond)
-        
-        return result
-    
+def mapper3(line):   
     def convertTimeToSeconds(time):      
         import re as re
         
-        matches = re.search(r'(\d{1,2}):(\d{1,2}):(\d{1,2}).(\d{3})+', time)
+        matches = re.search(r'(\d{1,2}):(\d{1,2}):(\d{1,2})', time)
         
         hour = int(matches.group(1))
         minute = int(matches.group(2))
@@ -100,10 +82,10 @@ def mapper3(line):
         shiftedDayInSeconds = shiftHalfOfADay(dayInSeconds)
         
         print('{}\t{}'.format(user, shiftedDayInSeconds))
-	
+
 def reducer3(line):
     def ShiftSecondsBack(seconds):
-        #The goal is to shift a time in seconds to midday to calculate an average
+        #The goal is to shift a time in seconds back to midnight to calculate an average
         if seconds < 43200:
             #shift up if after afternoon
             seconds += 43200
@@ -116,34 +98,92 @@ def reducer3(line):
         import datetime
         return str(datetime.timedelta(seconds=seconds))
 
-    global sum_time, current_user, user, count                 
+    global sum_time_Ex3, current_user_Ex3, count_Ex3                
   
     if line:
-        user, time = line.split('\t')
+        user_Ex3, time = line.split('\t')
         time = float(time)
     
-        if(current_user == user):
-            sum_time += time
-            count = count + 1
+        if(current_user_Ex3 == user_Ex3):
+            sum_time_Ex3 += time
+            count_Ex3 = count_Ex3 + 1
         else: 
-            if current_user != None:
-                mean_shifted_time = round(sum_time/count, 2)
+            if current_user_Ex3 != None:
+                mean_shifted_time = round(sum_time_Ex3/count_Ex3, 2)
                 mean_time = ShiftSecondsBack(mean_shifted_time)
-                print('{}\t{}'.format(current_user, secondsToTime(mean_time)))
-            count = 1
-            sum_time = time
-            current_user = user
+                print('{}\t{}'.format(current_user_Ex3, secondsToTime(mean_time)))
+            count_Ex3 = 1
+            sum_time_Ex3 = time
+            current_user_Ex3 = user_Ex3
     else:
-        mean_shifted_time = round(sum_time/count, 2)
+        mean_shifted_time = round(sum_time_Ex3/count_Ex3, 2)
         mean_time = ShiftSecondsBack(mean_shifted_time)
-        print('{}\t{}'.format(current_user, secondsToTime(mean_time)))
+        print('{}\t{}'.format(current_user_Ex3, secondsToTime(mean_time)))
 
     
 def mapper4(line):
-    None
+    def convertToDatetime(datestring):
+        import datetime       
+        import re as re
+        
+        matches = re.search(r'((\d{4})-(\d{2})-(\d{2}) (\d{1,2}):(\d{1,2}):(\d{1,2}))+', datestring)
+        
+        year = int(matches.group(2))
+        month = int(matches.group(3))
+        day = int(matches.group(4))
+        hour = int(matches.group(5))
+        minute = int(matches.group(6))
+        second = int(matches.group(7))
+        
+        result = datetime.datetime(year, month, day, hour, minute, second)
+        
+        return result
+
+    def timeDiffInSeconds(time1,time2):
+        import datetime 
+        
+        diff = time1-time2
+        
+        return int(diff.total_seconds())
+        
+    user = line.split(',')[1]
+    
+    bedtime = line.split(',')[2]
+    
+    intendedBedtime = line.split(',')[4]
+       
+    if bedtime and intendedBedtime: 
+        diff = timeDiffInSeconds(convertToDatetime(bedtime),convertToDatetime(intendedBedtime))
+        if diff > 0:
+            print('{}\t{}'.format(user, diff))
+	
 
 def reducer4(line):
-    None
+    #source: http://python3.codes/popular-sorting-algorithms/
+    def insertion_sort(l):
+        for i in range(1, len(l)):
+            j = i-1
+            key = l[i][1]
+            keyhelp = l[i]
+            while (l[j][1] > key) and (j >= 0):
+               l[j+1] = l[j]
+               j -= 1
+            l[j+1] = keyhelp  
+    
+    if line:
+        user_Ex5, diff_Ex5 = line.split('\t')
+    
+        if len(top5_Ex5) < 5:
+            top5_Ex5.append([user_Ex5, int(diff_Ex5)])
+        else: 
+            if int(diff_Ex5) > top5_Ex5[0][1]:
+                top5_Ex5[0] = [user_Ex5,int(diff_Ex5)]
+    else:
+        for item in top5_Ex5:
+            print('{}\t{}'.format(item[0],item[1]))
+    
+    insertion_sort(top5_Ex5)
+    
 
 
 def instantiate_queue():
@@ -158,15 +198,14 @@ def process_queue(queue):
 def main():
     None	
 
-global count
-global sum_time
-count, sum_time = 0, 0
+global count_Ex3
+global sum_time_Ex3
+count_Ex3, sum_time_Ex3 = 0, 0
+global current_user_Ex3
+current_user_Ex3 = None
 
-global current_user
-global user
-global current_count
-current_user, user = None, None
-current_count = 0
+global top5_Ex5
+top5_Ex5 = []
 
 import os
 os.chdir("C:/Users/Jesse/OneDrive/Bureaublad laptop Jesse/Pre-master/Project big data")
