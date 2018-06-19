@@ -50,11 +50,12 @@ def mapper2(line):
         print(user, fitness)
 	
 def reducer2(line):
-    global sum_fitness, current_user, user, count
+    global sum_fitness, current_user, count
     
     if line:
         user, fitness = line.split(' ')
         fitness = float(fitness)
+        user = user.strip('\"')
         
         if(current_user == user):
             sum_fitness += fitness
@@ -84,16 +85,66 @@ def reducer4(line):
 
 
 def instantiate_queue():
-    None
+    queue = Queue(maxsize = 30)
+    
+    return queue
     
 def consume_data_stream(queue):
-    None
+    r = requests.get('http://stream.meetup.com/2/rsvps', stream = True, \
+                     timeout = 5)
     
+    for line in r.iter_lines():
+        if not queue.full():
+            queue.put(json.loads(line))
+            print("Queue size is %s" % queue.qsize())
+        else:
+            break
+        
+    r.close()
+    
+    return queue
+
 def process_queue(queue):
-    None
+    while not queue.empty():
+        element = queue.get()
+        
+        if 'venue' in element:
+            value = element['venue']
+            lon = value['lon']
+            lat = value['lat']
+            print((lon, lat))
+    
+        # signal to the Queue instance that element has been processed
+        queue.task_done()
 
 def main():
-    None	
+    queue = instantiate_queue()
+    
+    while not queue.full():
+        consume_data_stream(queue)
+    
+    #blocks(waits) until the queue is filled! But maybe 
+    #the step above does this already
+    
+    while not queue.empty():
+        thread_1 = threading.Thread(target=consume_data_stream, args=(queue))
+        thread_1.start()
+    
+        thread_2 = threading.Thread(target=consume_data_stream, args=(queue))
+        thread_2.start()
+    
+        thread_3 = threading.Thread(target=consume_data_stream, args=(queue))
+        thread_3.start()
+    
+    #blocks (waits) until the queue is empty
+    
+    #put None in the queue three times
+    for i in range(3):
+        queue.put(None)
+    
+    thread_1.join()
+    thread_2.join()
+    thread_3.join()
 
 global count
 global sum_fitness
