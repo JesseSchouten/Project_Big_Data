@@ -51,8 +51,9 @@ def createNewDataframe(sleepdatafile, surveydatafile):
     columns = ['group','delay_nights','delay_time']
     dataresult = pd.DataFrame(columns=columns)
     
-    for index, row in week4Data.iterrows():
+    for row_index,row in week4Data.iterrows():
         index = row["ID"] 
+        
         if index not in dataresult:
             dataresult = insert_if_new(dataresult,index)
         condition = row[1]
@@ -114,7 +115,6 @@ Tip: create one function per visualization, and call those functions from the ma
 """
 def visualize():
     None
-
 
 
 def main():
