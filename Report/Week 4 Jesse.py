@@ -14,6 +14,9 @@ This template is meant as a guideline. Feel free to alter existing functions and
 Remember to use descriptive variable names and to keep functions concise and readable.
 """
 
+import os
+os.chdir("C:/Users/Jesse/Documents/Github/Project_Big_Data/Report")
+
 sleepdatafile   = 'hue_week_4_2017.csv'
 surveydatafile  = 'hue_questionnaire.csv'
 
@@ -21,12 +24,26 @@ surveydatafile  = 'hue_questionnaire.csv'
 The main() function is called when template_week_4.py is run from the command line.
 It is a good place to define the logic of the data flow (for example, reading, transforming, analyzing, visualizing).
 """
+
+
 def main():
     None
 
 def read_data(sleepdatafile, surveydatafile): 
-    None
+    import pandas as pd
+    import numpy as np
+    
+    week4Data = pd.read_csv(sleepdatafile,delimiter = ';')
+    
+    questionnaireData = pd.read_csv(surveydatafile, delimiter = ',')
 
+    delBedtimeCount = week4Data.iloc[:,5]
+
+    mergedData = week4Data[['ID','Condition']]
+    
+
+    
+    
 def correlate(x, y, test_type = 'pearson'):
     None
 
