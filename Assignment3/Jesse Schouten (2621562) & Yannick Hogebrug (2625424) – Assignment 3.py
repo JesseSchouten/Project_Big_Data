@@ -124,6 +124,7 @@ def reducer3(line):
   
     if line:
         user_Ex3, time = line.split('\t')
+        user_Ex3 = user_Ex3.strip('\"')
         time = float(time)
     
         if(current_user_Ex3 == user_Ex3):
@@ -194,6 +195,7 @@ def reducer4(line):
     
     if line:
         user_Ex5, diff_Ex5 = line.split('\t')
+        user_Ex5 = user_Ex5.strip('\"')
     
         if len(top5_Ex5) < 5:
             top5_Ex5.append([user_Ex5, int(diff_Ex5)])
@@ -246,20 +248,14 @@ def main():
     while not queue.full():
         queue = consume_data_stream(queue)
     
-    #blocks(waits) until the queue is filled! But maybe 
-    #the step above does this already
-    
-    while not queue.empty():
-        thread_1 = threading.Thread(target=process_queue, args=(queue,))
-        thread_1.start()
+    thread_1 = threading.Thread(target=process_queue, args=(queue,))
+    thread_1.start()
         
-        thread_2 = threading.Thread(target=process_queue, args=(queue,))
-        thread_2.start()
+    thread_2 = threading.Thread(target=process_queue, args=(queue,))
+    thread_2.start()
         
-        thread_3 = threading.Thread(target=process_queue, args=(queue,))
-        thread_3.start()
-        
-    #blocks (waits) until the queue is empty
+    thread_3 = threading.Thread(target=process_queue, args=(queue,))
+    thread_3.start()
     
     #put None in the queue three times
     for i in range(3):
@@ -294,8 +290,8 @@ if(len(sys.argv) == 4):
     reducer = sys.argv[3]
 else:
     data = 'hue_week_3_2017.csv'
-    mapper = 'mapper4'
-    reducer = 'reducer4'
+    mapper = 'mapper3'
+    reducer = 'reducer3'
 
 # Include these lines without modifications
  
