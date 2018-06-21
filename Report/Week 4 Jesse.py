@@ -5,8 +5,8 @@ We truthfully declare:
 - that we have neither helped other students nor received help from other students
 - that we provided references for all code that is not our own
 
-Name Student 1 email@vu.nl
-Name Student 2 email@vu.nl
+Yannick Hogebrug  y.r.hogebrug@student.vu.nl
+Jesse Schouten j7.schouten@student.vu.nl
 """
 
 """
@@ -18,25 +18,12 @@ Remember to use descriptive variable names and to keep functions concise and rea
 The main() function is called when template_week_4.py is run from the command line.
 It is a good place to define the logic of the data flow (for example, reading, transforming, analyzing, visualizing).
 """
+import os
+os.chdir("C:/Users/Jesse/Documents/Github/Project_Big_Data/Report")
 
-
-def main():
-    import os
-    os.chdir("C:/Users/Jesse/Documents/Github/Project_Big_Data/Report")
-    
-    import pandas as pd
-    import numpy as np
-    
-    sleepdatafile   = 'hue_week_4_2017.csv'
-    surveydatafile  = 'hue_questionnaire.csv'
-    week4Data = pd.read_csv(sleepdatafile,delimiter = ';')
-    week4Data = week4Data.set_index('ID')
-    questionnaireData = pd.read_csv(surveydatafile, delimiter = ',')
-    questionnaireData = questionnaireData.set_index('ID')
-    
-    newDataframe = createNewDataframe(sleepdatafile,questionnaireData)
-    
-    mergeDataframes(questionnaireData,newDataframe)
+import pandas as pd
+import numpy as np
+import scipy.stats as ss
 
 def createNewDataframe(sleepdatafile, surveydatafile): 
     def isBiggerThenZero(x):
@@ -94,13 +81,33 @@ def mergeDataframes(frame1,frame2):
     return pd.merge(frame1,frame2, how = 'inner',left_index = True,right_index=True)
     
 def correlate(x, y, test_type = 'pearson'):
-    None
+    x = np.array(x)
+    y=np.array(y)
+    r,p = ss.pearsonr(x,y)
+    
+    return [r,p]
 
 def compare(x, y, test_type = 'ttest'):
     None
 
 def regress(target, predictors):
     None
+    
+    
+sleepdatafile   = 'hue_week_4_2017.csv'
+surveydatafile  = 'hue_questionnaire.csv'
+week4Data = pd.read_csv(sleepdatafile,delimiter = ';')
+questionnaireData = pd.read_csv(surveydatafile, delimiter = ',')
+
+newDataframe = createNewDataframe(sleepdatafile,questionnaireData)
+
+questionnaireData = questionnaireData.set_index('ID')
+week4Data = week4Data.set_index('ID')
+mergedData = mergeDataframes(questionnaireData,newDataframe)
+
+x = mergedData[['bp_scale','delay_time']].dropna()['bp_scale']
+y = mergedData[['bp_scale','delay_time']].dropna()['delay_time']
+correlate(x,y)
 
 """
 Tip: create one function per visualization, and call those functions from the main visualize() function.
@@ -108,5 +115,13 @@ Tip: create one function per visualization, and call those functions from the ma
 def visualize():
     None
 
+
+
+def main():
+
+
+#Is executed when main() is called
 if __name__ == '__main__':
     main()
+
+    
