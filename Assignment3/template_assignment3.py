@@ -244,21 +244,21 @@ def main():
     queue = instantiate_queue()
     
     while not queue.full():
-        consume_data_stream(queue)
+        queue = consume_data_stream(queue)
     
     #blocks(waits) until the queue is filled! But maybe 
     #the step above does this already
     
     while not queue.empty():
-        thread_1 = threading.Thread(target=consume_data_stream, args=(queue))
+        thread_1 = threading.Thread(target=process_queue, args=(queue,))
         thread_1.start()
-    
-        thread_2 = threading.Thread(target=consume_data_stream, args=(queue))
+        
+        thread_2 = threading.Thread(target=process_queue, args=(queue,))
         thread_2.start()
-    
-        thread_3 = threading.Thread(target=consume_data_stream, args=(queue))
+        
+        thread_3 = threading.Thread(target=process_queue, args=(queue,))
         thread_3.start()
-    
+        
     #blocks (waits) until the queue is empty
     
     #put None in the queue three times
