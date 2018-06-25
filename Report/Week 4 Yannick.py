@@ -177,17 +177,23 @@ def visualize():
     
     #Histogram of mean time participants spent delaying their bedtime
     delay_time_0 = (mergedData.query('group==0')['delay_time'].dropna()).astype(int) 
+    
+    f = plt.figure(figsize=(10,6))
+    plt.suptitle("Histograms of delay time", fontsize = 16, fontweight = 'bold')
+    
+    ax1 = f.add_subplot(121)
+    ax1.title.set_text("Control group")
     plt.hist(delay_time_0, bins=range(0, max(delay_time_0) + 1000, 1000), color = 'blue', label = 'Control group')
     plt.legend(loc = 'upper right')
-    plt.suptitle("Histogram of delay time (Control group)")
     plt.xlabel('Delay time')
     plt.ylabel('Frequency')
-    plt.show()
-    
+    #plt.show()
+
+    ax2 = f.add_subplot(122)
+    ax2.title.set_text("Experimental group")
     delay_time_1 = (mergedData.query('group==1')['delay_time'].dropna()).astype(int) 
-    plt.hist(delay_time_1, bins=range(0, max(delay_time_1) + 1000, 1000), color = 'blue', label = 'Experimental group')
+    plt.hist(delay_time_1, bins=range(0, max(delay_time_1) + 1000, 1000), color = 'lime', label = 'Experimental group')
     plt.legend(loc = 'upper right')
-    plt.suptitle("Histogram of delay time (Experimental group)")
     plt.xlabel('Number of delay nights')
     plt.ylabel('Frequency')
     plt.show()
@@ -264,6 +270,22 @@ import seaborn as sns
 sns.set()
 df = mergedData[['delay_time', 'gender', 'age', 'chronotype', 'bp_scale', 'motivation', 'daytime_sleepiness', 'self_reported_effectiveness', 'group', 'delay_nights', 'sleep_time']]
 sns.pairplot(df)
+
+male = (mergedData.query('gender==1')['sleep_time'].dropna()/3600).astype(float)
+female = (mergedData.query('gender==2')['sleep_time'].dropna()/3600).astype(float)
+
+ 
+
+male.plot(kind='density', color = 'blue',label = 'Male')
+female.plot(kind='density',color = 'deeppink',label = 'Female')
+plt.suptitle("Density plot of the sleeptimes of both males and females")
+plt.legend(loc = 'upper right')
+plt.xlabel('Sleeptime')
+plt.ylabel('Density')
+plt.show()
+
+
+
 
 #%%
 
