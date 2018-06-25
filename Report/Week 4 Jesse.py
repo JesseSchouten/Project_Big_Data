@@ -106,16 +106,18 @@ def compare(x, y, test_type = 'ttest'):
 def regress(target, predictors):
     None
     
-def visualize():  
+def visualize_delay_nights():  
+    
     #Histogram of delay nights
     delay_nights_0 = mergedData.query('group==0')['delay_nights'].astype(int)
+    delay_nights_1 = mergedData.query('group==1')['delay_nights'].astype(int)
     
     f = plt.figure(figsize=(10,6))
     plt.suptitle("Histograms of delay nights", fontsize = 16, fontweight = 'bold')
     
     ax1 = f.add_subplot(121)
     ax1.title.set_text("Control group")
-    plt.hist(delay_nights_0, bins=range(0, max(delay_nights_0) + 1, 1), color = 'blue', label = 'Control group')
+    plt.hist(delay_nights_0, bins=range(0, max(delay_nights_0) + 1, 1), color = 'blue', edgecolor='black', linewidth=1.2, label = 'Control group')
     plt.legend(loc = 'upper right')
     plt.xlabel('Number of delay nights')
     plt.ylabel('Frequency')
@@ -123,21 +125,20 @@ def visualize():
     
     ax2 = f.add_subplot(122)
     ax2.title.set_text("Experimental group")
-    delay_nights_1 = mergedData.query('group==1')['delay_nights'].astype(int)
-    plt.hist(delay_nights_1, bins=range(0, max(delay_nights_1) + 1, 1), color = 'blue', label = 'Experimental group')
+    plt.hist(delay_nights_1, bins=range(0, max(delay_nights_1) + 1, 1), color = 'lime', edgecolor='black', linewidth=1.2, label = 'Experimental group')
     plt.legend(loc = 'upper right')
     plt.xlabel('Number of delay nights')
     plt.ylabel('Frequency')
+    plt.savefig('delaynightsHist.pdf')
     plt.show()
     
-    print('mean delay_nights (control):', mergedData.query('group==0')['delay_nights'].mean())
-    print('SD delay_nights (control):',np.std(mergedData.query('group==0')['delay_nights']))
-    print('median delay_nights (control):', np.median(mergedData.query('group==0')['delay_nights']))
+    print('mean delay_nights (control):', delay_nights_0.mean())
+    print('SD delay_nights (control):',np.std(delay_nights_0))
+    print('median delay_nights (control):', np.median(delay_nights_0))
     
-    print('mean delay_nights (experimental):', mergedData.query('group==1')['delay_nights'].mean())
-    print('SD delay_nights (experimental):',np.std(mergedData.query('group==1')['delay_nights']))
-    print('median delay_nights (experimental):',np.median(mergedData.query('group==1')['delay_nights']))
-    
+    print('mean delay_nights (experimental):', delay_nights_1.mean())
+    print('SD delay_nights (experimental):',np.std(delay_nights_1))
+    print('median delay_nights (experimental):',np.median(delay_nights_1))
     
     sm.qqplot(delay_nights_0)
     plt.title("QQ-plot delay nights vs. N(0,1) (control group)")
@@ -149,37 +150,42 @@ def visualize():
     
     print(ss.ranksums(delay_nights_0, delay_nights_1))
     
+def visualize_sleep_time():      
     #Histogram of time participants spent in bed each night
+    #in hours:
+    #sleep_time_0 = (mergedData.query('group==0')['sleep_time'].dropna()/3600).astype(float)
+    #sleep_time_1 = (mergedData.query('group==1')['sleep_time'].dropna()/3600).astype(float) 
     
-    sleep_time_0 = (mergedData.query('group==0')['sleep_time'].dropna()/3600).astype(float)
+    #in seconds:
+    sleep_time_0 = (mergedData.query('group==0')['sleep_time'].dropna()).astype(float)
+    sleep_time_1 = (mergedData.query('group==1')['sleep_time'].dropna()).astype(float)
     
     f = plt.figure(figsize=(10,6))
     plt.suptitle("Histograms of sleep time", fontsize = 16, fontweight = 'bold')
     
     ax1 = f.add_subplot(121)
     ax1.title.set_text("Control group")   
-    plt.hist(sleep_time_0, bins=[6,7,8,9,10], color = 'blue', label = 'Control group')
+    plt.hist(sleep_time_0,color = 'blue', label = 'Control group', edgecolor='black', linewidth=1.2)
     plt.legend(loc = 'upper right')
-    plt.xlabel('Sleep time in hours')
+    plt.xlabel('Sleep time in seconds')
     plt.ylabel('Frequency')
-    #plt.show()
     
     ax2 = f.add_subplot(122)
     ax2.title.set_text("Experimental group")
-    sleep_time_1 = (mergedData.query('group==1')['sleep_time'].dropna()/3600).astype(float) 
-    plt.hist(sleep_time_1, bins=[6,7,8,9,10], color = 'blue', label = 'Experimental group')
+    plt.hist(sleep_time_1, color = 'lime', label = 'Experimental group', edgecolor='black', linewidth=1.2)
     plt.legend(loc = 'upper right')
-    plt.xlabel('Sleep time in hours')
+    plt.xlabel('Sleep time in seconds')
     plt.ylabel('Frequency')
+    plt.savefig('sleeptimeHist.pdf')
     plt.show()
     
-    print('mean sleep_time (control):',mergedData.query('group==0')['sleep_time'].mean())
-    print('SD sleep_time (control):',np.std(mergedData.query('group==0')['sleep_time']))
-    print('median sleep_time (control):',np.median(mergedData.query('group==0')['sleep_time']))
+    print('mean sleep_time (control):',sleep_time_0.mean())
+    print('SD sleep_time (control):',np.std(sleep_time_0))
+    print('median sleep_time (control):',np.median(sleep_time_0))
     
-    print('mean sleep_time (experimental):',mergedData.query('group==1')['sleep_time'].mean())
-    print('SD sleep_time (experimental):',np.std(mergedData.query('group==1')['sleep_time']))
-    print('median sleep_time (experimental):',np.median(mergedData.query('group==1')['sleep_time']))
+    print('mean sleep_time (experimental):',sleep_time_1.mean())
+    print('SD sleep_time (experimental):',np.std(sleep_time_1))
+    print('median sleep_time (experimental):',np.median(sleep_time_1))
     
     sm.qqplot(sleep_time_0)
     plt.title("QQ-plot sleep time vs. N(0,1) (control group)")
@@ -191,16 +197,17 @@ def visualize():
     
     print(ss.ranksums(sleep_time_0, sleep_time_1))
     
-    
+def visualize_delay_time():      
     #Histogram of mean time participants spent delaying their bedtime
     delay_time_0 = (mergedData.query('group==0')['delay_time'].dropna()).astype(int) 
+    delay_time_1 = (mergedData.query('group==1')['delay_time'].dropna()).astype(int) 
     
     f = plt.figure(figsize=(10,6))
     plt.suptitle("Histograms of delay time", fontsize = 16, fontweight = 'bold')
     
     ax1 = f.add_subplot(121)
     ax1.title.set_text("Control group")
-    plt.hist(delay_time_0, bins=range(0, max(delay_time_0) + 1000, 1000), color = 'blue', label = 'Control group')
+    plt.hist(delay_time_0, bins=range(0, max(delay_time_0) + 1000, 1000), color = 'blue', edgecolor='black', linewidth=1.2, label = 'Control group')
     plt.legend(loc = 'upper right')
     plt.xlabel('Delay time')
     plt.ylabel('Frequency')
@@ -208,20 +215,32 @@ def visualize():
 
     ax2 = f.add_subplot(122)
     ax2.title.set_text("Experimental group")
-    delay_time_1 = (mergedData.query('group==1')['delay_time'].dropna()).astype(int) 
-    plt.hist(delay_time_1, bins=range(0, max(delay_time_1) + 1000, 1000), color = 'lime', label = 'Experimental group')
+    plt.hist(delay_time_1, bins=range(0, max(delay_time_1) + 1000, 1000), color = 'lime', edgecolor='black', linewidth=1.2, label = 'Experimental group')
     plt.legend(loc = 'upper right')
-    plt.xlabel('Number of delay nights')
+    plt.xlabel('Delay time')
     plt.ylabel('Frequency')
+    plt.savefig('delaytimeHist.pdf')
     plt.show()
     
-    print('mean delay_time (control):',mergedData.query('group==0')['delay_time'].mean())
-    print('SD delay_time (control):',np.std(mergedData.query('group==0')['delay_time']))
-    print('median delay_time (control):',np.median(mergedData.query('group==0')['delay_time']))
+    #Probably usable (in hours)
+    delay_time_0 /= 3600 
+    delay_time_1 /= 3600 
     
-    print('mean delay_time (experimental):',mergedData.query('group==1')['delay_time'].mean())
-    print('SD delay_time (experimental):',np.std(mergedData.query('group==1')['delay_time']))
-    print('median delay_time (experimental):',np.median(mergedData.query('group==1')['delay_time']))
+    delay_time_0.plot(kind='density', color = 'blue',label = 'Control group')
+    delay_time_1.plot(kind='density',color = 'lime',label = 'Experimental group')
+    plt.suptitle("Density plot of the delay times", fontsize = 16, fontweight = 'bold')
+    plt.legend(loc = 'upper right')
+    plt.xlabel('Delay time in hours')
+    plt.ylabel('Density')
+    plt.show()
+    
+    print('mean delay_time (control):',delay_time_0.mean())
+    print('SD delay_time (control):',np.std(delay_time_0))
+    print('median delay_time (control):',np.median(delay_time_0))
+    
+    print('mean delay_time (experimental):',delay_time_1.mean())
+    print('SD delay_time (experimental):',np.std(delay_time_1))
+    print('median delay_time (experimental):',np.median(delay_time_1))
     
     sm.qqplot(delay_time_0)
     plt.title("QQ-plot delay time vs. N(0,1) (control group)")
@@ -271,7 +290,9 @@ x = mergedData[['daytime_sleepiness','delay_time']].dropna()['daytime_sleepiness
 y = mergedData[['daytime_sleepiness','delay_time']].dropna()['delay_time']
 print('pearson correlation daytime_sleepiness & delay_time: ',correlate(x,y,'pearson'))
 
-visualize()
+visualize_delay_nights()
+visualize_sleep_time()
+visualize_delay_time()
 
 #Regression model:
 lin_regr = mergedData[['delay_time','gender', 'chronotype', 'bp_scale', 'motivation','delay_nights']].dropna().astype(int)
@@ -290,15 +311,27 @@ sns.set()
 df = mergedData[['delay_time', 'gender', 'age', 'chronotype', 'bp_scale', 'motivation', 'daytime_sleepiness', 'self_reported_effectiveness', 'group', 'delay_nights', 'sleep_time']]
 sns.pairplot(df)
 
+#Density plot of sleeptime for males and females:
 male = (mergedData.query('gender==1')['sleep_time'].dropna()/3600).astype(float)
 female = (mergedData.query('gender==2')['sleep_time'].dropna()/3600).astype(float)
  
-#Density plot:
 male.plot(kind='density', color = 'blue',label = 'Male')
 female.plot(kind='density',color = 'deeppink',label = 'Female')
-plt.suptitle("Density plot of the sleeptimes of both males and females")
+plt.suptitle("Density plot of the sleeptimes", fontsize = 16, fontweight = 'bold')
 plt.legend(loc = 'upper right')
-plt.xlabel('Sleeptime')
+plt.xlabel('Sleeptime in hours')
+plt.ylabel('Density')
+plt.show()
+
+#Density plot of sleeptime for both groups:
+group0 = (mergedData.query('group==0')['sleep_time'].dropna()/3600).astype(float)
+group1 = (mergedData.query('group==1')['sleep_time'].dropna()/3600).astype(float)
+ 
+group0.plot(kind='density', color = 'blue',label = 'Control')
+group1.plot(kind='density',color = 'deeppink',label = 'Experimental')
+plt.suptitle("Density plot of the sleeptimes", fontsize = 16, fontweight = 'bold')
+plt.legend(loc = 'upper right')
+plt.xlabel('Sleeptime in hours')
 plt.ylabel('Density')
 plt.show()
 
@@ -326,8 +359,12 @@ sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool),annot=True, cmap=sns.d
 ax.set_title('Heatmap of kendall correlation between variables in data',fontsize = 20)
 plt.show()
 
-
-
+#Line chart of chronotype
+#source: https://seaborn.pydata.org/tutorial/categorical.html
+visualisationdf = mergedData[['chronotype','gender','sleep_time']]
+visualisationdf['sleep_time_in_hours'] = visualisationdf['sleep_time'] / 3600
+visualisationdf.dropna()
+sns.swarmplot(x="chronotype", y="sleep_time_in_hours", hue="gender", data=visualisationdf).set_title("Swarmplot of sleeptime vs. chronotype");
 
 #%%
 
