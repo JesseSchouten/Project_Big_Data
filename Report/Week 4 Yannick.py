@@ -18,16 +18,7 @@ Remember to use descriptive variable names and to keep functions concise and rea
 The main() function is called when template_week_4.py is run from the command line.
 It is a good place to define the logic of the data flow (for example, reading, transforming, analyzing, visualizing).
 """
-import os
-os.chdir("C:/Users/Jesse/Documents/Github/Project_Big_Data/Report")
-
-import pandas as pd
-import numpy as np
-import scipy.stats as sp
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
-import matplotlib.pyplot as plt 
-
+#%%
 def createNewDataframe(sleepdatafile, surveydatafile): 
     def isBiggerThenZero(x):
         if x > 0:
@@ -47,11 +38,12 @@ def createNewDataframe(sleepdatafile, surveydatafile):
         if idx not in df.index:
             df = df.append(pd.Series({'group' : float('nan'),\
                                       'delay_nights' : float('nan'),\
-                                      'delay_time' : float('nan')},\
+                                      'delay_time' : float('nan'),\
+                                      'sleep_time' : float('nan')},\
                                       name=idx))
         return df
     
-    columns = ['group','delay_nights','delay_time']
+    columns = ['group','delay_nights','delay_time','sleep_time']
     dataresult = pd.DataFrame(columns=columns)
     
     for row_index,row in week4Data.iterrows():
@@ -70,13 +62,24 @@ def createNewDataframe(sleepdatafile, surveydatafile):
         delayTime = 0.0
         days = 0
         for i in [5,15,25,35,45,55,65,75,85,95,105,115]:
+            #Negative delaytimes are considered as 0.
             if isBiggerThenZero(row[i]) == 1:
                 delayTime += row[i]
             if not isnan(row[i]):
                 days +=1
         if days != 0:
             dataresult = dataresult.set_value(index,'delay_time',int(round(delayTime/days)))
-        
+            
+        sleepTime = 0.0
+        days = 0
+        for i in [8,18,28,38,48,58,68,78,88,98,108,118]:
+            #if we encounter a negative sleeptime, consider it as a NaN, as it's a clear measurement failure
+            if isBiggerThenZero(row[i]) == 1:
+                sleepTime += row[i]
+            if not isnan(row[i]) and isBiggerThenZero(row[i]) == 1:
+                    days+=1
+        if days != 0:
+            dataresult = dataresult.set_value(index,'sleep_time',int(round(sleepTime/days)))        
     return dataresult
 
 def mergeDataframes(frame1,frame2):
@@ -103,10 +106,122 @@ def compare(x, y, test_type = 'ttest'):
 def regress(target, predictors):
     None
     
-#def visualize():
+def visualize():  
+    #Histogram of delay nights
+    delay_nights_0 = mergedData.query('group==0')['delay_nights'].astype(int)
+    plt.hist(delay_nights_0, bins=range(0, max(delay_nights_0) + 1, 1), color = 'blue', label = 'Control group')
+    plt.legend(loc = 'upper right')
+    plt.suptitle("Histogram of delay nights (Control group)")
+    plt.xlabel('Number of delay nights')
+    plt.ylabel('Frequency')
+    plt.show()
     
+    delay_nights_1 = mergedData.query('group==1')['delay_nights'].astype(int)
+    plt.hist(delay_nights_1, bins=range(0, max(delay_nights_1) + 1, 1), color = 'blue', label = 'Experimental group')
+    plt.legend(loc = 'upper right')
+    plt.suptitle("Histogram of delay nights (Experimental group)")
+    plt.xlabel('Number of delay nights')
+    plt.ylabel('Frequency')
+    plt.show()
+    
+    print('mean delay_nights (control):', mergedData.query('group==1')['delay_nights'].mean())
+    print('SD delay_nights (control):',np.std(mergedData.query('group==1')['delay_nights']))
+    print('median delay_nights (control):', np.median(mergedData.query('group==1')['delay_nights']))
+    
+    print('mean delay_nights (experimental):', mergedData.query('group==0')['delay_nights'].mean())
+    print('SD delay_nights (experimental):',np.std(mergedData.query('group==0')['delay_nights']))
+    print('median delay_nights (experimental):',np.median(mergedData.query('group==0')['delay_nights']))
+    
+    sm.qqplot(delay_nights_0)
+    pylab.show()
+    
+    sm.qqplot(delay_nights_1)
+    pylab.show()
+    
+    ss.ranksums(delay_nights_0, delay_nights_1)
+    
+    #Histogram of time participants spent in bed each night
+    
+    sleep_time_0 = (mergedData.query('group==0')['sleep_time'].dropna()/3600).astype(float) 
+    plt.hist(sleep_time_0, bins=[6,7,8,9,10], color = 'blue', label = 'Control group')
+    plt.legend(loc = 'upper right')
+    plt.suptitle("Histogram of sleep time (Control group)")
+    plt.xlabel('Sleep time in hours')
+    plt.ylabel('Frequency')
+    plt.show()
+    
+    sleep_time_1 = (mergedData.query('group==1')['sleep_time'].dropna()/3600).astype(float) 
+    plt.hist(sleep_time_1, bins=[6,7,8,9,10], color = 'blue', label = 'Experimental group')
+    plt.legend(loc = 'upper right')
+    plt.suptitle("Histogram of sleep time (Experimental group)")
+    plt.xlabel('Sleep time in hours')
+    plt.ylabel('Frequency')
+    plt.show()
+    
+    print('mean sleep_time (control):',mergedData.query('group==1')['sleep_time'].mean())
+    print('SD sleep_time (control):',np.std(mergedData.query('group==1')['sleep_time']))
+    print('median sleep_time (control):',np.median(mergedData.query('group==1')['sleep_time']))
+    
+    print('mean sleep_time (experimental):',mergedData.query('group==0')['sleep_time'].mean())
+    print('SD sleep_time (experimental):',np.std(mergedData.query('group==0')['sleep_time']))
+    print('median sleep_time (experimental):',np.median(mergedData.query('group==0')['sleep_time']))
+    
+    sm.qqplot(sleep_time_0)
+    pylab.show()
+    
+    sm.qqplot(sleep_time_1)
+    pylab.show()
+    
+    ss.ranksums(sleep_time_0, sleep_time_1)
+    
+    
+    #Histogram of mean time participants spent delaying their bedtime
+    delay_time_0 = (mergedData.query('group==0')['delay_time'].dropna()).astype(int) 
+    plt.hist(delay_time_0, bins=range(0, max(delay_time_0) + 1000, 1000), color = 'blue', label = 'Control group')
+    plt.legend(loc = 'upper right')
+    plt.suptitle("Histogram of delay time (Control group)")
+    plt.xlabel('Delay time')
+    plt.ylabel('Frequency')
+    plt.show()
+    
+    delay_time_1 = (mergedData.query('group==1')['delay_time'].dropna()).astype(int) 
+    plt.hist(delay_time_1, bins=range(0, max(delay_time_1) + 1000, 1000), color = 'blue', label = 'Experimental group')
+    plt.legend(loc = 'upper right')
+    plt.suptitle("Histogram of delay time (Experimental group)")
+    plt.xlabel('Number of delay nights')
+    plt.ylabel('Frequency')
+    plt.show()
+    
+    print('mean delay_time (control):',mergedData.query('group==1')['delay_time'].mean())
+    print('SD delay_time (control):',np.std(mergedData.query('group==1')['delay_time']))
+    print('median delay_time (control):',np.median(mergedData.query('group==1')['delay_time']))
+    
+    print('mean delay_time (experimental):',mergedData.query('group==0')['delay_time'].mean())
+    print('SD delay_time (experimental):',np.std(mergedData.query('group==0')['delay_time']))
+    print('median delay_time (experimental):',np.median(mergedData.query('group==0')['delay_time']))
+    
+    sm.qqplot(delay_time_0)
+    pylab.show()
+    
+    sm.qqplot(delay_time_1)
+    pylab.show()
+    
+    ss.ranksums(delay_time_0, delay_time_1)
+    
+    
+#%%   
+#First, load the functions above as they are used in the main() program
+def main():
+    print('Open the file and run the code by hand!')
+    
+import pandas as pd
+import numpy as np
+import scipy.stats as ss
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+import matplotlib.pyplot as plt 
+import pylab as pylab
 
-    
 sleepdatafile = 'hue_week_4_2017.csv'
 surveydatafile = 'hue_questionnaire.csv'
 week4Data = pd.read_csv(sleepdatafile,delimiter = ';')
@@ -118,6 +233,7 @@ questionnaireData = questionnaireData.set_index('ID')
 week4Data = week4Data.set_index('ID')
 mergedData = mergeDataframes(questionnaireData,newDataframe)
 
+#Correlation of sets of determinants, as suggested in the exercise
 x = mergedData[['bp_scale','delay_time']].dropna()['bp_scale']
 y = mergedData[['bp_scale','delay_time']].dropna()['delay_time']
 correlate(x,y,'pearson')
@@ -130,145 +246,83 @@ x = mergedData[['daytime_sleepiness','delay_time']].dropna()['daytime_sleepiness
 y = mergedData[['daytime_sleepiness','delay_time']].dropna()['delay_time']
 correlate(x,y,'pearson')
 
-print(mergedData.query('group==1')['delay_nights'].mean())
-print(np.std(mergedData.query('group==1')['delay_nights']))
-print(np.median(mergedData.query('group==1')['delay_nights']))
+visualize()
 
-print(mergedData.query('group==0')['delay_nights'].mean())
-print(np.std(mergedData.query('group==0')['delay_nights']))
-print(np.median(mergedData.query('group==0')['delay_nights']))
+#Regression model:
+lin_regr = mergedData[['delay_time','gender', 'chronotype', 'bp_scale', 'motivation','delay_nights']].dropna().astype(int)
+mod = smf.ols(formula = 'delay_time ~ chronotype + bp_scale + delay_nights' , data=lin_regr)
+res = mod.fit()
+print(res.summary())
 
-#%%
-#Histogram of delay nights
-delay_nights_0 = mergedData.query('group==0')['delay_nights'].astype(int)
-plt.hist(delay_nights_0, bins=range(0, max(delay_nights_0) + 1, 1), color = 'blue', label = 'Control group')
-plt.legend(loc = 'upper right')
-plt.suptitle("Histogram of delay nights (Control group)")
-plt.xlabel('Number of delay nights')
-plt.ylabel('Frequency')
-plt.show()
+#Regression model:
+lin_regr = mergedData[['delay_time','gender','group', 'chronotype', 'bp_scale', 'motivation','delay_nights']].dropna().astype(int)
+mod = smf.ols(formula = 'delay_time ~ group' , data=lin_regr)
+res = mod.fit()
+print(res.summary())
 
-delay_nights_1 = mergedData.query('group==1')['delay_nights'].astype(int)
-plt.hist(delay_nights_1, bins=range(0, max(delay_nights_1) + 1, 1), color = 'blue', label = 'Experimental group')
-plt.legend(loc = 'upper right')
-plt.suptitle("Histogram of delay nights (Experimental group)")
-plt.xlabel('Number of delay nights')
-plt.ylabel('Frequency')
-plt.show()
-
-
-print(sp.stats.ttest_ind(delay_nights_0, delay_nights_1, nan_policy='omit')) 
-
-#Histogram of time participants spent in bed each night
-queryGroup0 = week4Data.query('Condition==0')
-sleeptimesGroup0 = pd.DataFrame(getBedtimes(queryGroup0))
-sleeptimesGroup0.columns = ['Inbedtimes']
-
-sleeptime_0 = (sleeptimesGroup0['Inbedtimes'].dropna()/3600).astype(float)
-plt.hist(sleeptime_0, bins=[0,2.5,5,7.5,10,12.5,15,17.5,20,22.5], color = 'blue', label = 'Control group')
-plt.legend(loc = 'upper right')
-plt.suptitle("Histogram of sleeptime (Control group)")
-plt.xlabel('Sleep time')
-plt.ylabel('Frequency')
-plt.show()
-
-queryGroup1 = week4Data.query('Condition==1')
-sleeptimesGroup1 = pd.DataFrame(getBedtimes(queryGroup1))
-sleeptimesGroup1.columns = ['Inbedtimes']
-
-sleeptime_1 = (sleeptimesGroup1['Inbedtimes'].dropna()/3600).astype(float)
-plt.hist(sleeptime_1, bins=[0,2.5,5,7.5,10,12.5,15,17.5,20,22.5], color = 'blue', label = 'Experimental group')
-plt.legend(loc = 'upper right')
-plt.suptitle("Histogram of sleeptime (Experimental group)")
-plt.xlabel('Sleep time')
-plt.ylabel('Frequency')
-plt.show()
-
-
-#Histogram of mean time participants spent delaying their bedtime
-delay_time_0 = mergedData.query('group==0')['delay_time'].dropna().astype(int) 
-plt.hist(delay_time_0, bins=range(0, max(delay_time_0) + 1000, 1000), color = 'blue', label = 'Control group')
-plt.legend(loc = 'upper right')
-plt.suptitle("Histogram of delay time (Control group)")
-plt.xlabel('Delay time')
-plt.ylabel('Frequency')
-plt.show()
-
-delay_time_1 = mergedData.query('group==1')['delay_time'].dropna().astype(int) 
-plt.hist(delay_time_1, bins=range(0, max(delay_time_1) + 1000, 1000), color = 'blue', label = 'Experimental group')
-plt.legend(loc = 'upper right')
-plt.suptitle("Histogram of delay time (Experimental group)")
-plt.xlabel('Number of delay nights')
-plt.ylabel('Frequency')
-plt.show()
-
-
-test = np.random.normal(sleeptime_0.mean(),np.std(sleeptime_0), len(sleeptime_0))
-test = np.random.normal(delay_time_0.mean(),np.std(delay_time_0), len(delay_time_0))
-
-sm.qqplot(sleeptime_0)
-pylab.show()
+import seaborn as sns
+sns.set()
+df = mergedData[['delay_time', 'gender', 'age', 'chronotype', 'bp_scale', 'motivation', 'daytime_sleepiness', 'self_reported_effectiveness', 'group', 'delay_nights', 'sleep_time']]
+sns.pairplot(df)
 
 #%%
 
 
     #the condition column in week4Data is the 'group' in the mergedData file
-def getBedtimes(query):     
-    result = []    
-        #source:https://stackoverflow.com/questions/944700/how-can-i-check-for-nan-in-python
-    def isnan(value):
-      try:
-          import math
-          return math.isnan(float(value))
-      except:
-          return False
-    
-    for row_index,row in query.iterrows():
-        for i in [7,17,27,37,47,57,67,77,87,97,107,117]:
-            if not isnan(row[i]):
-                result.append(row[i]) 
-           
-    return result
-        
+#def getBedtimes(query):     
+#    result = []    
+#        #source:https://stackoverflow.com/questions/944700/how-can-i-check-for-nan-in-python
+#    def isnan(value):
+#      try:
+#          import math
+#          return math.isnan(float(value))
+#      except:
+#          return False
+#    
+#    for row_index,row in query.iterrows():
+#        for i in [7,17,27,37,47,57,67,77,87,97,107,117]:
+#            if not isnan(row[i]):
+#                result.append(row[i]) 
+#           
+#    return result
+     
+#    #Histogram of time participants spent in bed each night
+#    queryGroup0 = week4Data.query('Condition==0')
+#    sleeptimesGroup0 = pd.DataFrame(getBedtimes(queryGroup0))
+#    sleeptimesGroup0.columns = ['Inbedtimes']
+#    
+#    sleeptime_0 = (sleeptimesGroup0['Inbedtimes'].dropna()/3600).astype(float)
+#    plt.hist(sleeptime_0, bins=[0,2.5,5,7.5,10,12.5,15,17.5,20,22.5], color = 'blue', label = 'Control group')
+#    plt.legend(loc = 'upper right')
+#    plt.suptitle("Histogram of sleeptime (Control group)")
+#    plt.xlabel('Sleep time')
+#    plt.ylabel('Frequency')
+#    plt.show()
+#    
+#    queryGroup1 = week4Data.query('Condition==1')
+#    sleeptimesGroup1 = pd.DataFrame(getBedtimes(queryGroup1))
+#    sleeptimesGroup1.columns = ['Inbedtimes']
+#    
+#    sleeptime_1 = (sleeptimesGroup1['Inbedtimes'].dropna()/3600).astype(float)
+#    plt.hist(sleeptime_1, bins=[0,2.5,5,7.5,10,12.5,15,17.5,20,22.5], color = 'blue', label = 'Experimental group')
+#    plt.legend(loc = 'upper right')
+#    plt.suptitle("Histogram of sleeptime (Experimental group)")
+#    plt.xlabel('Sleep time')
+#    plt.ylabel('Frequency')
+#    plt.show()
+#    
+#    print(sleeptimesGroup0.mean())
+#    print(np.std(sleeptimesGroup0))
+#    print(np.median(sleeptimesGroup0))
+#    
+#    print(sleeptimesGroup1.mean())
+#    print(np.std(sleeptimesGroup1))
+#    print(np.median(sleeptimesGroup1))
 
-
-
-
-print(sleeptimesGroup0.mean())
-print(np.std(sleeptimesGroup0))
-print(np.median(sleeptimesGroup0))
-
-print(sleeptimesGroup1.mean())
-print(np.std(sleeptimesGroup1))
-print(np.median(sleeptimesGroup1))
-
-
-print(mergedData.query('group==1')['delay_time'].mean())
-print(np.std(mergedData.query('group==1')['delay_time']))
-print(np.median(mergedData.query('group==1')['delay_time']))
-
-print(mergedData.query('group==0')['delay_time'].mean())
-print(np.std(mergedData.query('group==0')['delay_time']))
-print(np.median(mergedData.query('group==0')['delay_time']))
-
-lin_regr = mergedData[['delay_time', 'age', 'chronotype', 'motivation']].dropna().astype(int)
-mod = smf.ols(formula = 'delay_time ~ age + chronotype + motivation', data = lin_regr)
-res = mod.fit()
-print(res.summary())
-
-group1data = mergedData.groupby(['group'])
-
-
-
-def calculateDifferenceInGroups(df):
-    
 
 """
 Tip: create one function per visualization, and call those functions from the main visualize() function.
-"""
-
-
-def main():
+""
 
 
 #Is executed when main() is called
