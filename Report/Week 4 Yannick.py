@@ -23,8 +23,9 @@ os.chdir("C:/Users/Jesse/Documents/Github/Project_Big_Data/Report")
 
 import pandas as pd
 import numpy as np
-import scipy.stats as ss
+import scipy.stats as sp
 import statsmodels.api as sm
+import statsmodels.formula.api as smf
 import matplotlib.pyplot as plt 
 
 def createNewDataframe(sleepdatafile, surveydatafile): 
@@ -156,6 +157,8 @@ plt.ylabel('Frequency')
 plt.show()
 
 
+print(sp.stats.ttest_ind(delay_nights_0, delay_nights_1, nan_policy='omit')) 
+
 #Histogram of time participants spent in bed each night
 queryGroup0 = week4Data.query('Condition==0')
 sleeptimesGroup0 = pd.DataFrame(getBedtimes(queryGroup0))
@@ -248,8 +251,11 @@ print(mergedData.query('group==0')['delay_time'].mean())
 print(np.std(mergedData.query('group==0')['delay_time']))
 print(np.median(mergedData.query('group==0')['delay_time']))
 
-results = smf.ols('delay_time ~ age + chronotype + motivation', data=mergedData).fit()
-    
+lin_regr = mergedData[['delay_time', 'age', 'chronotype', 'motivation']].dropna().astype(int)
+mod = smf.ols(formula = 'delay_time ~ age + chronotype + motivation', data = lin_regr)
+res = mod.fit()
+print(res.summary())
+
 group1data = mergedData.groupby(['group'])
 
 
