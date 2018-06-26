@@ -209,7 +209,7 @@ def visualize_delay_time():
     ax1.title.set_text("Control group")
     plt.hist(delay_time_0, bins=range(0, max(delay_time_0) + 1000, 1000), color = 'blue', edgecolor='black', linewidth=1.2, label = 'Control group')
     plt.legend(loc = 'upper right')
-    plt.xlabel('Delay time')
+    plt.xlabel('Delay time in seconds')
     plt.ylabel('Frequency')
     #plt.show()
 
@@ -217,7 +217,7 @@ def visualize_delay_time():
     ax2.title.set_text("Experimental group")
     plt.hist(delay_time_1, bins=range(0, max(delay_time_1) + 1000, 1000), color = 'lime', edgecolor='black', linewidth=1.2, label = 'Experimental group')
     plt.legend(loc = 'upper right')
-    plt.xlabel('Delay time')
+    plt.xlabel('Delay time in seconds')
     plt.ylabel('Frequency')
     plt.savefig('delaytimeHist.pdf')
     plt.show()
@@ -279,6 +279,14 @@ x = mergedData[['daytime_sleepiness','delay_time']].dropna()['daytime_sleepiness
 y = mergedData[['daytime_sleepiness','delay_time']].dropna()['delay_time']
 print('pearson correlation daytime_sleepiness & delay_time: ',correlate(x,y,'pearson'))
 
+#pairplot of variables in correlation analysis
+sns.set()
+df = mergedData[['delay_time', 'age', 'bp_scale', 'daytime_sleepiness']]
+pplot = sns.pairplot(df)
+plt.subplots_adjust(top=0.95)
+pplot.fig.suptitle('Pairwise scatterplots',fontsize=16,fontweight = 'bold')
+plt.show(pplot)
+
 visualize_delay_nights()
 visualize_sleep_time()
 visualize_delay_time()
@@ -288,12 +296,14 @@ mod = smf.ols(formula = 'delay_time ~ chronotype + bp_scale + group' , data=merg
 res = mod.fit()
 print(res.summary())
 
+#pairplot of variables in model
 sns.set()
-df = mergedData[['delay_time', 'age', 'bp_scale', 'daytime_sleepiness']]
+df = mergedData[['delay_time', 'chronotype', 'bp_scale', 'group']]
 pplot = sns.pairplot(df)
 plt.subplots_adjust(top=0.95)
 pplot.fig.suptitle('Pairwise scatterplots',fontsize=16,fontweight = 'bold')
 plt.show(pplot)
+
 
 #Line chart of chronotype
 #source: https://seaborn.pydata.org/tutorial/categorical.html
