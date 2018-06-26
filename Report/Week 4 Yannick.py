@@ -106,8 +106,7 @@ def compare(x, y, test_type = 'ttest'):
 def regress(target, predictors):
     None
     
-def visualize_delay_nights():  
-    
+def visualize():  
     #Histogram of delay nights
     delay_nights_0 = mergedData.query('group==0')['delay_nights'].astype(int)
     delay_nights_1 = mergedData.query('group==1')['delay_nights'].astype(int)
@@ -129,7 +128,7 @@ def visualize_delay_nights():
     plt.legend(loc = 'upper right')
     plt.xlabel('Number of delay nights')
     plt.ylabel('Frequency')
-    plt.savefig('delaynightsHist.pdf')
+    #plt.savefig('delaynightsHist.pdf')
     plt.show()
     
     print('mean delay_nights (control):', delay_nights_0.mean())
@@ -149,8 +148,7 @@ def visualize_delay_nights():
     pylab.show()
     
     print(ss.ranksums(delay_nights_0, delay_nights_1))
-    
-def visualize_sleep_time():      
+       
     #Histogram of time participants spent in bed each night
     #in hours:
     #sleep_time_0 = (mergedData.query('group==0')['sleep_time'].dropna()/3600).astype(float)
@@ -176,7 +174,7 @@ def visualize_sleep_time():
     plt.legend(loc = 'upper right')
     plt.xlabel('Sleep time in seconds')
     plt.ylabel('Frequency')
-    plt.savefig('sleeptimeHist.pdf')
+    #plt.savefig('sleeptimeHist.pdf')
     plt.show()
     
     print('mean sleep_time (control):',sleep_time_0.mean())
@@ -196,8 +194,7 @@ def visualize_sleep_time():
     pylab.show()
     
     print(ss.ranksums(sleep_time_0, sleep_time_1))
-    
-def visualize_delay_time():      
+         
     #Histogram of mean time participants spent delaying their bedtime
     delay_time_0 = (mergedData.query('group==0')['delay_time'].dropna()).astype(int) 
     delay_time_1 = (mergedData.query('group==1')['delay_time'].dropna()).astype(int) 
@@ -220,18 +217,6 @@ def visualize_delay_time():
     plt.xlabel('Delay time')
     plt.ylabel('Frequency')
     plt.savefig('delaytimeHist.pdf')
-    plt.show()
-    
-    #Probably usable (in hours)
-    delay_time_0 /= 3600 
-    delay_time_1 /= 3600 
-    
-    delay_time_0.plot(kind='density', color = 'blue',label = 'Control group')
-    delay_time_1.plot(kind='density',color = 'lime',label = 'Experimental group')
-    plt.suptitle("Density plot of the delay times", fontsize = 16, fontweight = 'bold')
-    plt.legend(loc = 'upper right')
-    plt.xlabel('Delay time in hours')
-    plt.ylabel('Density')
     plt.show()
     
     print('mean delay_time (control):',delay_time_0.mean())
@@ -265,6 +250,7 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import matplotlib.pyplot as plt 
 import pylab as pylab
+import seaborn as sns
 
 sleepdatafile = 'hue_week_4_2017.csv'
 surveydatafile = 'hue_questionnaire.csv'
@@ -290,81 +276,30 @@ x = mergedData[['daytime_sleepiness','delay_time']].dropna()['daytime_sleepiness
 y = mergedData[['daytime_sleepiness','delay_time']].dropna()['delay_time']
 print('pearson correlation daytime_sleepiness & delay_time: ',correlate(x,y,'pearson'))
 
-visualize_delay_nights()
-visualize_sleep_time()
-visualize_delay_time()
+visualize()
+
 
 #Regression model:
-lin_regr = mergedData[['delay_time','gender', 'chronotype', 'bp_scale', 'motivation','delay_nights']].dropna().astype(int)
-mod = smf.ols(formula = 'delay_time ~ chronotype + bp_scale + delay_nights' , data=lin_regr)
+mod = smf.ols(formula = 'delay_time ~ chronotype + bp_scale + group' , data=mergedData.dropna().astype(float))
 res = mod.fit()
 print(res.summary())
 
-#Regression model:
-lin_regr = mergedData[['delay_time','gender','group', 'chronotype', 'bp_scale', 'motivation','delay_nights']].dropna().astype(int)
-mod = smf.ols(formula = 'delay_time ~ group' , data=lin_regr)
-res = mod.fit()
-print(res.summary())
-
-import seaborn as sns
 sns.set()
-df = mergedData[['delay_time', 'gender', 'age', 'chronotype', 'bp_scale', 'motivation', 'daytime_sleepiness', 'self_reported_effectiveness', 'group', 'delay_nights', 'sleep_time']]
-sns.pairplot(df)
-
-#Density plot of sleeptime for males and females:
-male = (mergedData.query('gender==1')['sleep_time'].dropna()/3600).astype(float)
-female = (mergedData.query('gender==2')['sleep_time'].dropna()/3600).astype(float)
- 
-male.plot(kind='density', color = 'blue',label = 'Male')
-female.plot(kind='density',color = 'deeppink',label = 'Female')
-plt.suptitle("Density plot of the sleeptimes", fontsize = 16, fontweight = 'bold')
-plt.legend(loc = 'upper right')
-plt.xlabel('Sleeptime in hours')
-plt.ylabel('Density')
-plt.show()
-
-#Density plot of sleeptime for both groups:
-group0 = (mergedData.query('group==0')['sleep_time'].dropna()/3600).astype(float)
-group1 = (mergedData.query('group==1')['sleep_time'].dropna()/3600).astype(float)
- 
-group0.plot(kind='density', color = 'blue',label = 'Control')
-group1.plot(kind='density',color = 'deeppink',label = 'Experimental')
-plt.suptitle("Density plot of the sleeptimes", fontsize = 16, fontweight = 'bold')
-plt.legend(loc = 'upper right')
-plt.xlabel('Sleeptime in hours')
-plt.ylabel('Density')
-plt.show()
-
-#correlation plot:
-
-#https://stackoverflow.com/questions/29432629/correlation-matrix-using-pandas
-import seaborn as sns
-
-#https://www.spss-tutorials.com/pearson-correlation-coefficient/ also suitable for dichtomious variables
-pearsondf =mergedData[['delay_time','sleep_time','gender','bp_scale',]].dropna().astype(int)
-
-f, ax = plt.subplots(figsize=(10, 8))
-corr = pearsondf.corr()
-sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool),annot=True, cmap=sns.diverging_palette(220, 10, as_cmap=True),
-            square=True, ax=ax,)
-ax.set_title('Heatmap of pearson correlation between variables in data',fontsize = 20)
-plt.show()
-
-kendalldf = mergedData[['delay_time','age','chronotype','motivation','daytime_sleepiness','self_reported_effectiveness','group','delay_nights']].dropna().astype(int)
-
-f, ax = plt.subplots(figsize=(10, 8))
-corr = kendalldf.corr(method = 'kendall')
-sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool),annot=True, cmap=sns.diverging_palette(220, 10, as_cmap=True),
-            square=True, ax=ax,)
-ax.set_title('Heatmap of kendall correlation between variables in data',fontsize = 20)
-plt.show()
+df = mergedData[['delay_time', 'age', 'bp_scale', 'daytime_sleepiness']]
+pplot = sns.pairplot(df)
+plt.subplots_adjust(top=0.95)
+pplot.fig.suptitle('Pairwise scatterplots',fontsize=16,fontweight = 'bold')
+plt.show(pplot)
 
 #Line chart of chronotype
 #source: https://seaborn.pydata.org/tutorial/categorical.html
-visualisationdf = mergedData[['chronotype','gender','sleep_time']]
-visualisationdf['sleep_time_in_hours'] = visualisationdf['sleep_time'] / 3600
+visualisationdf = mergedData[['chronotype','group','delay_time']]
+visualisationdf['Delay_time_in_hours'] = visualisationdf['delay_time'] / 3600
 visualisationdf.dropna()
-sns.swarmplot(x="chronotype", y="sleep_time_in_hours", hue="gender", data=visualisationdf).set_title("Swarmplot of sleeptime vs. chronotype");
+ax = sns.swarmplot(x="chronotype", y="Delay_time_in_hours", hue="group", data=visualisationdf).set_title("Delaytime vs chronotype (per group)");
+plt.xlabel("Chronotype")
+plt.ylabel("Delay time in hours")
+plt.show(ax)
 
 #%%
 
@@ -421,6 +356,65 @@ sns.swarmplot(x="chronotype", y="sleep_time_in_hours", hue="gender", data=visual
 #    print(np.median(sleeptimesGroup1))
 
 
+##Density plot of sleeptime for males and females:
+#male = (mergedData.query('gender==1')['sleep_time'].dropna()/3600).astype(float)
+#female = (mergedData.query('gender==2')['sleep_time'].dropna()/3600).astype(float)
+# 
+#male.plot(kind='density', color = 'blue',label = 'Male')
+#female.plot(kind='density',color = 'deeppink',label = 'Female')
+#plt.suptitle("Density plot of the sleeptimes", fontsize = 16, fontweight = 'bold')
+#plt.legend(loc = 'upper right')
+#plt.xlabel('Sleeptime in hours')
+#plt.ylabel('Density')
+#plt.show()
+#
+##Density plot of sleeptime for both groups:
+#group0 = (mergedData.query('group==0')['sleep_time'].dropna()/3600).astype(float)
+#group1 = (mergedData.query('group==1')['sleep_time'].dropna()/3600).astype(float)
+# 
+#group0.plot(kind='density', color = 'blue',label = 'Control')
+#group1.plot(kind='density',color = 'deeppink',label = 'Experimental')
+#plt.suptitle("Density plot of the sleeptimes", fontsize = 16, fontweight = 'bold')
+#plt.legend(loc = 'upper right')
+#plt.xlabel('Sleeptime in hours')
+#plt.ylabel('Density')
+#plt.show()
+
+##correlation plot:
+#
+##https://stackoverflow.com/questions/29432629/correlation-matrix-using-pandas
+#
+#
+##https://www.spss-tutorials.com/pearson-correlation-coefficient/ also suitable for dichtomious variables
+#pearsondf =mergedData[['delay_time','sleep_time','gender','bp_scale',]].dropna().astype(int)
+#
+#f, ax = plt.subplots(figsize=(10, 8))
+#corr = pearsondf.corr()
+#sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool),annot=True, cmap=sns.diverging_palette(220, 10, as_cmap=True),
+#            square=True, ax=ax,)
+#ax.set_title('Heatmap of pearson correlation between variables in data',fontsize = 20)
+#plt.show()
+#
+#kendalldf = mergedData[['delay_time','age','chronotype','motivation','daytime_sleepiness','self_reported_effectiveness','group','delay_nights']].dropna().astype(int)
+#
+#f, ax = plt.subplots(figsize=(10, 8))
+#corr = kendalldf.corr()
+#sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool),annot=True, cmap=sns.diverging_palette(220, 10, as_cmap=True),
+#            square=True, ax=ax,)
+#ax.set_title('Heatmap of kendall correlation between variables in data',fontsize = 20)
+#plt.show()
+
+#    #Probably usable (in hours)
+#    delay_time_0 /= 3600 
+#    delay_time_1 /= 3600 
+#    
+#    delay_time_0.plot(kind='density', color = 'blue',label = 'Control group')
+#    delay_time_1.plot(kind='density',color = 'lime',label = 'Experimental group')
+#    plt.suptitle("Density plot of the delay times", fontsize = 16, fontweight = 'bold')
+#    plt.legend(loc = 'upper right')
+#    plt.xlabel('Delay time in hours')
+#    plt.ylabel('Density')
+#    plt.show()
 
 """
 Tip: create one function per visualization, and call those functions from the main visualize() function.
