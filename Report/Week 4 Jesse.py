@@ -305,6 +305,16 @@ plt.xlabel("Chronotype")
 plt.ylabel("Delay time in hours")
 plt.show(ax)
 
+#Descriptive statistics of variables in data
+print(mergedData.count())
+print(np.mean(mergedData))
+print(np.std(mergedData))
+print(np.median(mergedData,axis=0))
+print(np.max(mergedData))
+print(np.min(mergedData))
+
+
+
 #%%
 
 
