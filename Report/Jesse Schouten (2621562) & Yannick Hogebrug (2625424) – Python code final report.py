@@ -318,7 +318,7 @@ print(np.min(mergedData))
 
 """
 Tip: create one function per visualization, and call those functions from the main visualize() function.
-""
+"""
 
 
 #Is executed when main() is called
